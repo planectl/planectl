@@ -2,7 +2,7 @@ apiVersion: pulumi.com/v1
 kind: Program
 metadata:
   name: demo-program
-  namespace: pulumi-system
+  namespace: gitops
 spec:
   program:
     # Pulumi YAML DSL -- defines Kubernetes resources inline.

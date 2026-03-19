@@ -2,7 +2,7 @@ apiVersion: pulumi.com/v1
 kind: Stack
 metadata:
   name: demo-stack
-  namespace: pulumi-system
+  namespace: gitops
 spec:
   # Stack name -- used as a key for state
   stack: dev

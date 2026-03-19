@@ -3,7 +3,7 @@ entries:
   planectl:
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2026-03-19T09:39:52.022338+02:00"
+    created: "2026-03-19T09:57:15.49791+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -24,7 +24,7 @@ entries:
     description: 'One-command GitOps demo stack: Gitea + ArgoCD + Crossplane + Pulumi
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
-    digest: 0ee8032bf71f2a46058ce6c9d0c9eac254e328d13d8c05c68ee1446009f764c0
+    digest: 50956ffea1e49f33bd1614b1fe169bf02baac031827df24dda5a6d84eff79179
     home: https://github.com/drulacosmin/planectl
     keywords:
     - gitops
@@ -46,7 +46,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2026-03-19T09:39:51.906524+02:00"
+    created: "2026-03-19T09:57:15.438848+02:00"
     description: A Helm chart for Kubernetes
     digest: 447292346f5a42ac7eb86261405fd85217367f69c6ae10b5e5634a7dd8a06e09
     name: planectl
@@ -54,4 +54,4 @@ entries:
     urls:
     - https://drulacosmin.github.io/planectl/planectl-0.1.0.tgz
     version: 0.1.0
-generated: "2026-03-19T09:39:51.904279+02:00"
+generated: "2026-03-19T09:57:15.43721+02:00"

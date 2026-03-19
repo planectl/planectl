@@ -222,7 +222,7 @@ def _apply_secret(v1: k8s_client.CoreV1Api, ns: str, secret: k8s_client.V1Secret
         log(f"  CREATED  Secret/{name} in {ns}")
     except k8s_client.ApiException as e:
         if e.status == 409:
-            v1.replace_namespaced_secret(ns, name, secret)
+            v1.replace_namespaced_secret(name, ns, secret)
             log(f"  UPDATED  Secret/{name} in {ns}")
         else:
             raise
