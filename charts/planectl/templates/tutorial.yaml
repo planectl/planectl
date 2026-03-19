@@ -83,7 +83,9 @@ spec:
       containers:
         - name: tutorial
           image: node:20
-          command: ["node", "/app/server.js"]
+          # Symlink kubectl into /usr/local/bin so it's available in all shell types
+          # (login shells reset PATH via /etc/profile, so /app alone isn't enough).
+          command: ["sh", "-c", "ln -sf /app/kubectl /usr/local/bin/kubectl && exec node /app/server.js"]
           env:
             - name: PORT
               value: {{ .Values.tutorial.port | quote }}
@@ -95,12 +97,8 @@ spec:
               value: "8080"
             - name: DEMO_REPO
               value: "admin/demo-repo"
-            # Run bash directly in this container — no nsenter needed.
-            # kubectl is installed by the initContainer into /app.
             - name: SHELL_CMD
               value: "/bin/bash --login"
-            - name: PATH
-              value: "/app:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
             {{- if .Values.init.kubeconfigB64 }}
             - name: KUBECONFIG
               value: /kube/config
