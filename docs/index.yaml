@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  planectl:
+  - apiVersion: v2
+    appVersion: 1.16.0
+    created: "2026-03-19T07:59:41.338955+02:00"
+    description: A Helm chart for Kubernetes
+    digest: 447292346f5a42ac7eb86261405fd85217367f69c6ae10b5e5634a7dd8a06e09
+    name: planectl
+    type: application
+    urls:
+    - https://cosmindrula.github.io/planectl/planectl-0.1.0.tgz
+    version: 0.1.0
+generated: "2026-03-19T07:59:41.337856+02:00"
