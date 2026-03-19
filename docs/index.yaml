@@ -2,8 +2,51 @@ apiVersion: v1
 entries:
   planectl:
   - apiVersion: v2
+    appVersion: 0.3.0
+    created: "2026-03-19T12:07:14.180792+02:00"
+    dependencies:
+    - condition: gitea.enabled
+      name: gitea
+      repository: https://dl.gitea.com/charts/
+      version: 12.5.0
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 7.8.28
+    - condition: crossplane.enabled
+      name: crossplane
+      repository: https://charts.crossplane.io/stable
+      version: 1.18.5
+    - condition: pulumi-kubernetes-operator.enabled
+      name: pulumi-kubernetes-operator
+      repository: oci://ghcr.io/pulumi/helm-charts
+      version: 2.5.1
+    description: 'One-command GitOps demo stack: Gitea + ArgoCD + Crossplane + Pulumi
+      Operator, all wired together and ready to use. A single helm install bootstraps
+      the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
+    digest: ea9991518d42def62eee5a87ec8853b8e03d0e03915da1ac4c69bc417896ddb2
+    home: https://github.com/drulacosmin/planectl
+    keywords:
+    - gitops
+    - gitea
+    - argocd
+    - crossplane
+    - pulumi
+    - kubernetes
+    - infrastructure-as-code
+    maintainers:
+    - name: drulacosmin
+      url: https://github.com/drulacosmin
+    name: planectl
+    sources:
+    - https://github.com/drulacosmin/planectl
+    type: application
+    urls:
+    - https://drulacosmin.github.io/planectl/planectl-0.3.0.tgz
+    version: 0.3.0
+  - apiVersion: v2
     appVersion: 0.2.0
-    created: "2026-03-19T10:26:28.313145+02:00"
+    created: "2026-03-19T12:07:14.117343+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -46,7 +89,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2026-03-19T10:26:28.251902+02:00"
+    created: "2026-03-19T12:07:14.047016+02:00"
     description: A Helm chart for Kubernetes
     digest: 447292346f5a42ac7eb86261405fd85217367f69c6ae10b5e5634a7dd8a06e09
     name: planectl
@@ -54,4 +97,4 @@ entries:
     urls:
     - https://drulacosmin.github.io/planectl/planectl-0.1.0.tgz
     version: 0.1.0
-generated: "2026-03-19T10:26:28.248498+02:00"
+generated: "2026-03-19T12:07:14.045091+02:00"

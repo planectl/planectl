@@ -5,8 +5,8 @@ description: |
   all wired together and ready to use. A single helm install bootstraps the full
   pipeline -- git server, CD engine, cloud controller, and k8s operator.
 type: application
-version: 0.2.0
-appVersion: "0.2.0"
+version: 0.3.0
+appVersion: "0.3.0"
 keywords:
   - gitops
   - gitea
