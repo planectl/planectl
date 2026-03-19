@@ -76,6 +76,8 @@ spec:
               value: "8080"
             - name: DEMO_REPO
               value: "admin/demo-repo"
+            - name: SHELL
+              value: "/bin/bash"
           ports:
             - name: http
               containerPort: {{ .Values.tutorial.port }}
