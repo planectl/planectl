@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitOps Workshop — Interactive Tutorial</title>
+<link rel="stylesheet" href="node_modules/@xterm/xterm/css/xterm.css" />
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap');
+
+  :root {
+    --bg: #0a0e1a;
+    --surface: #0f1628;
+    --border: #1e2d4a;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --accent3: #7c3aed;
+    --green: #00ff88;
+    --red: #ff3b5c;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --card: #111827;
+    --sidebar-w: 260px;
+    --header-h: 52px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    width: 100vw;
+    overflow-y: auto;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    height: var(--header-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .header-logo {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .header-sep {
+    width: 1px;
+    height: 24px;
+    background: var(--border);
+  }
+
+  .header-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .header-subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+  }
+
+  .header-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .live-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    background: rgba(15,22,40,0.95);
+    color: var(--muted);
+    transition: all 0.2s;
+    letter-spacing: 1px;
+    cursor: pointer;
+  }
+
+  .live-link:hover { color: var(--text); }
+  .live-link.gitea:hover { border-color: var(--accent2); color: var(--accent2); }
+  .live-link.argo:hover  { border-color: #f97316; color: #f97316; }
+
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    animation: live-blink 2s infinite;
+  }
+  .live-link.gitea .live-dot { background: var(--accent2); }
+  .live-link.argo  .live-dot { background: #f97316; }
+
+  @keyframes live-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .workspace {
+    display: flex;
+    height: calc(100vh - var(--header-h));
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  /* ── STEP SIDEBAR ── */
+  .step-sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .step-sidebar-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .step-list {
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .step-list::-webkit-scrollbar { width: 4px; }
+  .step-list::-webkit-scrollbar-track { background: transparent; }
+  .step-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+    border-bottom: 1px solid rgba(30,45,74,0.4);
+  }
+
+  .step-item:hover {
+    background: rgba(0,212,255,0.04);
+  }
+
+  .step-item.active {
+    background: rgba(0,212,255,0.07);
+    border-left-color: var(--accent);
+  }
+
+  .step-item.completed {
+    opacity: 0.6;
+  }
+
+  .step-item.completed .step-num {
+    background: var(--green);
+    color: #000;
+    border-color: var(--green);
+  }
+
+  .step-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: all 0.2s;
+  }
+
+  .step-item.active .step-num {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+    font-weight: 700;
+  }
+
+  .step-info { flex: 1; min-width: 0; }
+
+  .step-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 2px;
+  }
+
+  .step-item.active .step-label { color: var(--accent); }
+
+  .step-desc {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .progress-bar {
+    height: 2px;
+    background: var(--border);
+    flex-shrink: 0;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.4s ease;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  /* ── CONTENT PANEL ── */
+  .content-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .content-header {
+    padding: 16px 24px 12px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .step-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .content-title {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+
+  .content-subtitle {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    margin-top: 4px;
+  }
+
+  .content-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+  }
+
+  .content-body::-webkit-scrollbar { width: 4px; }
+  .content-body::-webkit-scrollbar-track { background: transparent; }
+  .content-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .content-nav {
+    padding: 12px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .nav-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 7px 18px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+
+  .nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .nav-btn:disabled:hover { border-color: var(--border); color: var(--text); }
+
+  .nav-btn.primary {
+    background: rgba(0,212,255,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .nav-btn.primary:hover {
+    background: rgba(0,212,255,0.2);
+  }
+
+  .nav-counter {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── TERMINAL PANEL ── */
+  .terminal-panel {
+    height: 480px;
+    display: flex;
+    flex-direction: column;
+    background: #0d1117;
+    border-top: 2px solid var(--accent);
+    flex-shrink: 0;
+  }
+
+  .terminal-anchor-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    background: rgba(0,212,255,0.07);
+    border: 1px solid rgba(0,212,255,0.2);
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .terminal-anchor-hint:hover {
+    background: rgba(0,212,255,0.14);
+    border-color: var(--accent);
+  }
+
+  .terminal-bar {
+    background: #161b22;
+    border-bottom: 1px solid #30363d;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .traffic-lights { display: flex; gap: 5px; }
+  .tl { width: 11px; height: 11px; border-radius: 50%; }
+  .tl-red    { background: #ff5f57; }
+  .tl-yellow { background: #febc2e; }
+  .tl-green  { background: #28c840; }
+
+  .terminal-bar .t-title {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    color: #8b949e;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .t-toolbar { display: flex; gap: 6px; margin-left: auto; }
+
+  .t-btn {
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #c9d1d9;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    transition: background 0.15s;
+  }
+  .t-btn:hover { background: #30363d; }
+
+  #terminal-container {
+    flex: 1;
+    padding: 6px;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  #terminal-container .xterm { height: 100%; }
+
+  /* ── CONTENT STYLES ── */
+
+  /* Grid bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .workspace { position: relative; z-index: 1; }
+
+  /* Problem cards */
+  .problem-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 4px;
+  }
+
+  .problem-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .problem-card.bad  { border-color: rgba(255,59,92,0.3); }
+  .problem-card.bad::before  { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--red); }
+  .problem-card.good { border-color: rgba(0,255,136,0.3); }
+  .problem-card.good::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--green); }
+
+  .card-label { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:10px; }
+  .card-label.bad  { color: var(--red); }
+  .card-label.good { color: var(--green); }
+  .card-title { font-size:15px; font-weight:700; margin-bottom:8px; }
+  .card-body  { font-size:12px; color:var(--muted); line-height:1.7; }
+
+  /* Pipeline */
+  .pipeline-container { width:100%; }
+
+  .pipeline {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin: 16px 0;
+    overflow-x: auto;
+  }
+
+  .p-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  .p-node.visible { opacity:1; transform:scale(1); }
+
+  .p-icon {
+    width: 60px; height: 60px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    border: 1px solid var(--border);
+    position: relative;
+    background: var(--card);
+  }
+
+  .p-icon.git-node      { color: var(--accent2); border-color: var(--accent2); }
+  .p-icon.actions-node  { color: var(--accent);  border-color: var(--accent); }
+  .p-icon.argo-node     { color: #f97316;        border-color: #f97316; }
+  .p-icon.crossplane-node { color: var(--green); border-color: var(--green); }
+  .p-icon.aws-node      { color: var(--accent3); border-color: var(--accent3); }
+
+  .p-label    { font-family:'Space Mono',monospace; font-size:10px; color:var(--muted); text-align:center; }
+  .p-sublabel { font-size:10px; color:var(--muted); text-align:center; max-width:80px; line-height:1.3; margin-top:-4px; }
+
+  .p-arrow {
+    display: flex; flex-direction: column; align-items: center;
+    width: 50px; opacity:0; transition: opacity 0.4s;
+  }
+  .p-arrow.visible { opacity:1; }
+
+  .arrow-line {
+    width:100%; height:2px;
+    background: var(--border);
+    position: relative; overflow: hidden;
+  }
+  .arrow-pulse {
+    position:absolute; top:0; left:-100%; width:50%; height:100%;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    animation: pulse-flow 1.5s infinite;
+  }
+  .p-arrow.active-arrow .arrow-line { background: var(--accent); }
+  .arrow-head {
+    width:0; height:0;
+    border-left:7px solid var(--border);
+    border-top:4px solid transparent;
+    border-bottom:4px solid transparent;
+    margin-left:auto; margin-top:-2px;
+  }
+  .p-arrow.active-arrow .arrow-head { border-left-color: var(--accent); }
+  .arrow-label { font-family:'Space Mono',monospace; font-size:9px; color:var(--muted); margin-top:4px; text-align:center; }
+
+  .status-badge {
+    position:absolute; top:-8px; right:-8px;
+    font-size:8px; padding:2px 6px; border-radius:8px;
+    font-family:'Space Mono',monospace; font-weight:700;
+    opacity:0; transition:opacity 0.3s;
+  }
+  .status-badge.show  { opacity:1; }
+  .status-badge.synced { background:rgba(0,255,136,0.2); color:var(--green); border:1px solid var(--green); }
+  .status-badge.ready  { background:rgba(0,255,136,0.2); color:var(--green); border:1px solid var(--green); }
+
+  @keyframes pulse-flow { 0%{left:-60%} 100%{left:120%} }
+
+  /* Run btn */
+  .run-demo-btn {
+    background: none;
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 7px 20px;
+    border-radius: 4px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    display: block;
+    margin: 0 auto 16px;
+    transition: background 0.2s;
+  }
+  .run-demo-btn:hover { background: rgba(0,212,255,0.1); }
+
+  /* Q&A layout */
+  .q-layout { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .q-side {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:18px;
+  }
+  .q-header { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .q-icon {
+    width:32px; height:32px; border-radius:6px;
+    display:flex; align-items:center; justify-content:center; font-size:15px;
+  }
+  .q-tool { font-size:14px; font-weight:700; }
+  .q-status { font-size:16px; font-weight:700; margin-bottom:10px; }
+  .q-answer { font-size:12px; color:var(--muted); line-height:1.7; border-top:1px solid var(--border); padding-top:12px; margin-top:4px; }
+
+  .t-block {
+    background:#050810; border:1px solid var(--border);
+    border-radius:5px; padding:12px;
+    font-family:'Space Mono',monospace; font-size:11px; line-height:1.8;
+    margin-top:12px;
+  }
+  .t-prompt { color:var(--muted); }
+  .t-cmd    { color:var(--accent); }
+  .t-good   { color:var(--green); }
+  .t-bad    { color:var(--red); }
+
+  /* Composition */
+  .comp-layout { display:grid; grid-template-columns:1fr 30px 1fr; gap:12px; align-items:start; }
+  .comp-label {
+    font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px;
+    text-transform:uppercase; padding:3px 10px; border-radius:4px;
+    display:inline-block; width:fit-content; margin-bottom:8px;
+  }
+  .comp-label.complex { background:rgba(124,58,237,0.2); color:var(--accent3); }
+  .comp-label.simple  { background:rgba(0,255,136,0.1);  color:var(--green); }
+
+  .code-block {
+    background:#050810; border:1px solid var(--border);
+    border-radius:7px; padding:14px;
+    font-family:'Space Mono',monospace; font-size:10px; line-height:1.9;
+    position:relative; overflow:hidden;
+  }
+  .code-block::before { content:''; position:absolute; top:0; left:0; width:3px; height:100%; }
+  .code-block.complex::before { background:var(--accent3); }
+  .code-block.simple::before  { background:var(--green); }
+
+  .cy{color:#7dd3fc} .cg{color:var(--green)} .co{color:var(--accent2)}
+  .cm{color:var(--muted)} .cw{color:var(--text)} .cp{color:var(--accent3)}
+  .comp-arrow { display:flex; align-items:center; justify-content:center; font-size:24px; color:var(--accent); align-self:center; }
+
+  /* Insight grid */
+  .insight-quote {
+    font-size:clamp(18px,2.5vw,26px); font-weight:800; line-height:1.3;
+    letter-spacing:-0.5px; margin-bottom:24px;
+  }
+  .insight-quote em { font-style:normal; color:var(--accent); }
+
+  .insight-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+  .insight-card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:8px; padding:18px; position:relative; overflow:hidden;
+  }
+  .insight-card::after {
+    content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  }
+  .insight-card:nth-child(1)::after { background:var(--accent2); }
+  .insight-card:nth-child(2)::after { background:var(--accent); }
+  .insight-card:nth-child(3)::after { background:var(--green); }
+  .ic-num   { font-family:'Space Mono',monospace; font-size:26px; font-weight:700; color:var(--border); margin-bottom:6px; }
+  .ic-title { font-size:13px; font-weight:700; margin-bottom:6px; }
+  .ic-body  { font-size:11px; color:var(--muted); line-height:1.6; }
+
+  /* Segmentation (kubectl) */
+  .kubectl-split { display:grid; grid-template-columns:1fr 40px 1fr; gap:0; align-items:start; }
+  .kubectl-side { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:18px; }
+  .kubectl-side.before { border-color:rgba(255,107,53,0.4); }
+  .kubectl-side.after  { border-color:rgba(0,255,136,0.4); }
+  .kubectl-divider { display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px; height:100%; min-height:200px; }
+  .divider-line    { width:1px; flex:1; background:var(--border); }
+  .divider-cmd     { font-family:'Space Mono',monospace; font-size:9px; color:var(--accent); writing-mode:vertical-rl; letter-spacing:2px; white-space:nowrap; }
+  .ks-header { font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:14px; }
+  .ks-header.before { color:var(--accent2); }
+  .ks-header.after  { color:var(--green); }
+  .tool-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); font-size:12px; }
+  .tool-row:last-child { border-bottom:none; }
+  .tool-row .emoji { font-size:16px; width:24px; }
+  .tool-row .name  { font-weight:700; flex:1; }
+  .tool-row .role  { font-size:10px; color:var(--muted); }
+  .kubectl-note { margin-top:12px; font-size:11px; color:var(--muted); line-height:1.7; }
+
+  /* Summary table */
+  .summary-table { width:100%; border-collapse:collapse; font-size:12px; }
+  .summary-table th {
+    font-family:'Space Mono',monospace; font-size:10px; letter-spacing:2px;
+    text-transform:uppercase; color:var(--muted); text-align:left;
+    padding:10px 12px; border-bottom:1px solid var(--border);
+  }
+  .summary-table td {
+    padding:12px; border-bottom:1px solid rgba(30,45,74,0.5); vertical-align:middle;
+  }
+  .summary-table tr:last-child td { border-bottom:none; }
+  .summary-table tr:hover td { background:rgba(0,212,255,0.03); }
+  .layer-badge { display:inline-flex; align-items:center; gap:7px; font-weight:700; font-size:12px; }
+  .layer-dot { width:7px; height:7px; border-radius:50%; }
+
+  .bottom-line {
+    margin-top:16px; padding:14px 20px;
+    background:rgba(0,212,255,0.05); border:1px solid rgba(0,212,255,0.2);
+    border-radius:8px; font-size:12px; text-align:center;
+    color:var(--accent); font-weight:700; line-height:1.6;
+  }
+
+  /* Run-command buttons inside content */
+  .cmd-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #050810;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 8px 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .cmd-block:hover {
+    border-color: var(--accent);
+    background: rgba(0,212,255,0.06);
+  }
+  .cmd-block .cmd-arrow {
+    font-size: 13px;
+    color: var(--muted);
+    flex-shrink: 0;
+  }
+  .cmd-block .cmd-text { flex: 1; }
+  .cmd-block .cmd-hint {
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 16px 0 8px;
+  }
+
+  p.body-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 12px;
+  }
+
+  p.body-text strong { color: var(--text); }
+  p.body-text em     { color: var(--accent); font-style: normal; }
+
+  .open-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: 6px;
+    font-family: 'Space Mono', monospace; font-size: 10px;
+    text-decoration: none; cursor: pointer;
+    transition: all 0.2s; letter-spacing: 1px; border: 1px solid;
+    margin-top: 8px; margin-right: 8px;
+  }
+  .open-btn.gitea-btn {
+    background:rgba(255,107,53,0.08); border-color:rgba(255,107,53,0.4); color:var(--accent2);
+  }
+  .open-btn.gitea-btn:hover { background:rgba(255,107,53,0.15); border-color:var(--accent2); }
+  .open-btn.argo-btn {
+    background:rgba(249,115,22,0.08); border-color:rgba(249,115,22,0.4); color:#f97316;
+  }
+  .open-btn.argo-btn:hover { background:rgba(249,115,22,0.15); border-color:#f97316; }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="header-logo">GitOps</div>
+  <div class="header-sep"></div>
+  <div>
+    <div class="header-title">Architecture as an Enforced API</div>
+    <div class="header-subtitle">// interactive workshop</div>
+  </div>
+  <div class="header-right">
+    <a class="live-link gitea" href="#" data-config="gitea-actions" target="_blank">
+      <span class="live-dot"></span>Gitea Actions
+    </a>
+    <a class="live-link argo" href="#" data-config="argo-apps" target="_blank">
+      <span class="live-dot"></span>ArgoCD
+    </a>
+    <a class="terminal-anchor-hint" onclick="document.getElementById('terminal-section').scrollIntoView({behavior:'smooth'})">
+      ↓ terminal
+    </a>
+  </div>
+</header>
+
+<!-- ── WORKSPACE ── -->
+<div class="workspace">
+
+  <!-- STEP SIDEBAR -->
+  <aside class="step-sidebar">
+    <div class="step-sidebar-header">Workshop Steps</div>
+    <div class="step-list" id="step-list"></div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+  </aside>
+
+  <!-- CONTENT PANEL -->
+  <div class="content-panel">
+    <div class="content-header">
+      <div class="step-tag" id="step-tag">Step 1 of 8</div>
+      <div class="content-title" id="content-title"></div>
+      <div class="content-subtitle" id="content-subtitle"></div>
+    </div>
+    <div class="content-body" id="content-body"></div>
+    <div class="content-nav">
+      <button class="nav-btn" id="btn-prev" onclick="prevStep()">← prev</button>
+      <span class="nav-counter" id="nav-counter">1 / 8</span>
+      <button class="nav-btn primary" id="btn-next" onclick="nextStep()">next →</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── TERMINAL PANEL (below fold — scroll down or click "↓ terminal") ── -->
+<div class="terminal-panel" id="terminal-section">
+  <div class="terminal-bar">
+    <div class="traffic-lights">
+      <span class="tl tl-red"></span>
+      <span class="tl tl-yellow"></span>
+      <span class="tl tl-green"></span>
+    </div>
+    <span class="t-title">
+      live shell
+      <span id="status-dot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#d29922;margin:0 4px;vertical-align:middle;"></span>
+      <span id="status-label" style="font-size:10px;color:#8b949e;">connecting…</span>
+    </span>
+    <div class="t-toolbar">
+      <button class="t-btn" onclick="term.clear()">Clear</button>
+    </div>
+  </div>
+  <div id="terminal-container"></div>
+</div>
+
+<!-- xterm.js deps -->
+<script src="node_modules/@xterm/xterm/lib/xterm.js"></script>
+<script src="node_modules/@xterm/addon-fit/lib/addon-fit.js"></script>
+<script src="node_modules/@xterm/addon-web-links/lib/addon-web-links.js"></script>
+<script src="node_modules/@xterm/addon-attach/lib/addon-attach.js"></script>
+
+<script>
+// ── WORKSHOP STEPS ────────────────────────────────────────────────────────────
+const steps = [
+  {
+    label: 'What is a Cloud API?',
+    desc: 'AWS is just HTTP. No magic.',
+    title: 'What is a cloud API?',
+    subtitle: '// every button in the AWS Console is an HTTP call under the hood',
+    body: () => `
+      <p class="body-text">
+        AWS is not magic. It is a large collection of <strong>HTTP endpoints</strong>.
+        When you click "Create bucket" in the Console, it sends a
+        <em>PUT /my-bucket</em> to <code style="color:var(--accent2);font-size:11px;">s3.amazonaws.com</code>
+        with a signed Authorization header. That is it.
+      </p>
+      <p class="body-text">
+        Every cloud resource — an S3 bucket, an RDS instance, a security group —
+        is <strong>state managed over HTTP</strong>. The GUI is optional.
+        The CLI is optional. The API is the ground truth.
+      </p>
+      <div class="t-block" style="margin:12px 0;">
+        <div style="color:var(--muted);font-size:10px;margin-bottom:6px;"># What the Console actually sends:</div>
+        <div><span class="t-prompt">PUT</span> <span class="t-cmd">/my-demo-bucket</span></div>
+        <div><span class="t-good">Host: s3.eu-west-1.amazonaws.com</span></div>
+        <div><span class="t-good">Authorization: AWS4-HMAC-SHA256 Credential=AKIA...</span></div>
+        <div><span class="t-good">x-amz-content-sha256: e3b0c44...</span></div>
+        <div style="color:var(--muted);margin-top:6px;font-size:10px;"># Response: 200 OK — bucket created</div>
+      </div>
+      <p class="body-text">
+        Kubernetes works the same way. <code style="color:var(--accent);font-size:11px;">kubectl get nodes</code>
+        is a <em>GET /api/v1/nodes</em> to the API server.
+        The cluster is a database with an HTTP API on top.
+      </p>
+      <div class="section-label">Try it — Kubernetes is also a REST API</div>
+      ${cmd('kubectl get nodes', 'GET /api/v1/nodes — your cluster responds')}
+      ${cmd('kubectl get namespaces', 'GET /api/v1/namespaces — list all namespaces')}
+    `
+  },
+  {
+    label: 'CLI Creates Resources',
+    desc: 'From command to HTTP call to real resource',
+    title: 'The CLI is a wrapper.',
+    subtitle: '// aws s3 mb → PUT /bucket. kubectl apply → PUT /apis/.../buckets/name',
+    body: () => `
+      <p class="body-text">
+        The CLI saves you from crafting raw HTTP. But under the hood it is the same call.
+        Both approaches have the same limitation: <strong>one-shot</strong>.
+        Run it and the resource exists. Delete it and it is gone — forever, silently.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 32px 1fr;gap:0;align-items:start;margin:12px 0;">
+        <div class="kubectl-side before" style="border-color:rgba(0,212,255,0.3);">
+          <div class="ks-header" style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">AWS CLI</div>
+          <div class="t-block" style="background:#050810;border:none;padding:0;">
+            <div><span class="t-prompt">$</span> <span class="t-cmd">aws s3 mb s3://my-bucket \\</span></div>
+            <div style="padding-left:16px;"><span class="t-cmd">--region eu-west-1</span></div>
+            <div style="margin-top:6px;color:var(--muted);font-size:10px;">→ PUT /my-bucket HTTP/1.1</div>
+            <div style="color:var(--muted);font-size:10px;">→ Host: s3.eu-west-1.amazonaws.com</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:18px;padding-top:30px;">≡</div>
+        <div class="kubectl-side after" style="border-color:rgba(0,212,255,0.3);">
+          <div class="ks-header" style="color:var(--accent);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;">Crossplane YAML</div>
+          <div class="code-block simple" style="margin:0;">
+<span class="cy">apiVersion</span><span class="cw">: s3.aws.upbound.io/v1beta1</span>
+<span class="cy">kind</span><span class="cw">: Bucket</span>
+<span class="cy">metadata</span><span class="cw">:</span>
+<span class="cw">  </span><span class="cy">name</span><span class="cw">: my-demo-bucket</span>
+<span class="cy">spec</span><span class="cw">:</span>
+<span class="cw">  </span><span class="cy">forProvider</span><span class="cw">:</span>
+<span class="cw">    </span><span class="cy">region</span><span class="cw">: eu-west-1</span>
+          </div>
+        </div>
+      </div>
+      <p class="body-text">
+        Both create the same bucket. The difference: the YAML is a <strong>persistent declaration</strong>.
+        Someone can read it, review it, version it. The CLI command is a memory.
+      </p>
+      <div class="section-label">Inspect the schema — Crossplane installed the CRD</div>
+      ${cmd('kubectl get crds | grep s3', 'See the S3 Bucket CRD Crossplane installed')}
+      ${cmd('kubectl explain bucket.spec.forProvider', 'Read the API schema for a Bucket')}
+    `
+  },
+  {
+    label: 'The Drift Problem',
+    desc: 'One-shot commands leave invisible state',
+    title: 'The problem: drift is invisible.',
+    subtitle: '// you ran a command six months ago. is the result still correct?',
+    body: () => `
+      <p class="body-text">
+        You create a bucket with the CLI. Someone deletes it from the Console at 2am.
+        Nothing recreates it. Nothing noticed. Your application breaks at 3am.
+      </p>
+      <p class="body-text">
+        Terraform solves the <em>apply</em> step — but only when you run it.
+        Between runs, drift is silent. There is a gap between what the code says
+        and what reality contains.
+      </p>
+      <table class="summary-table" style="margin:12px 0;">
+        <thead>
+          <tr><th>Approach</th><th>Who watches for drift?</th><th>How do you roll back?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="layer-badge"><span class="layer-dot" style="background:var(--red)"></span>CLI / Console</span></td>
+            <td style="color:var(--muted)">Nobody</td>
+            <td style="color:var(--muted)">You remember what it was</td>
+          </tr>
+          <tr>
+            <td><span class="layer-badge"><span class="layer-dot" style="background:var(--accent2)"></span>Terraform</span></td>
+            <td style="color:var(--muted)">Only on <code style="color:var(--accent2);font-size:10px;">terraform plan</code></td>
+            <td style="color:var(--muted)"><code style="font-size:10px;">git revert</code> + re-apply manually</td>
+          </tr>
+          <tr>
+            <td><span class="layer-badge"><span class="layer-dot" style="background:var(--green)"></span>GitOps + Crossplane</span></td>
+            <td style="color:var(--green)">Continuously, every few seconds</td>
+            <td style="color:var(--green)"><code style="font-size:10px;">git revert</code> → auto-healed</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="section-label">Check what Crossplane is currently managing</div>
+      ${cmd('kubectl get managed -A', 'All Crossplane-managed resources and their READY status')}
+      ${cmd('kubectl get crds | grep crossplane', 'All CRDs Crossplane installed')}
+    `
+  },
+  {
+    label: 'Git as Truth',
+    desc: 'A file in a folder IS the resource',
+    title: 'Git as the source of truth.',
+    subtitle: '// add a file → resource created. delete a file → resource deleted.',
+    body: () => `
+      <p class="body-text">
+        Instead of running commands, you commit a YAML file to a folder.
+        That file <em>is</em> the declaration that a resource should exist.
+        Git history becomes the audit log. No external state file. No <code style="font-size:11px;color:var(--accent2)">terraform.tfstate</code> in S3.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;">
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--green);margin-bottom:6px;">The folder contract</div>
+          <div class="code-block simple">
+<span class="cg">crossplane/</span>
+<span class="cw">  buckets/</span>
+<span class="cy">    team-a-logs.yaml</span>   <span class="cm">← S3 bucket</span>
+<span class="cy">    team-b-data.yaml</span>   <span class="cm">← S3 bucket</span>
+<span class="cw">  security-groups/</span>
+<span class="cy">    web-public.yaml</span>    <span class="cm">← SG</span>
+<span class="cw">  rds/</span>
+<span class="cy">    prod-postgres.yaml</span> <span class="cm">← RDS</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent2);margin-bottom:6px;">The rules</div>
+          <div class="kubectl-side before" style="border-color:rgba(0,255,136,0.3);">
+            <div style="font-size:12px;line-height:2.2;font-family:'Space Mono',monospace;">
+              <div><span style="color:var(--green)">+</span> Add file → resource created</div>
+              <div><span style="color:var(--accent)">~</span> Edit file → resource patched</div>
+              <div><span style="color:var(--red)">-</span> Delete file → resource deleted</div>
+              <div style="margin-top:8px;font-size:10px;color:var(--muted);">Git history = audit log<br>No separate state store</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="section-label">See ArgoCD watching the folder</div>
+      ${cmd('kubectl get application crossplane-buckets -n argocd -o yaml | grep -A5 source', 'See which Git folder ArgoCD is watching')}
+      ${cmd('kubectl get application crossplane-buckets -n argocd', 'Current sync status')}
+    `
+  },
+  {
+    label: 'ArgoCD: Sync Engine',
+    desc: 'Keeps the cluster identical to Git',
+    title: 'ArgoCD: Git → cluster, always.',
+    subtitle: '// if someone manually deletes it, ArgoCD puts it back',
+    body: () => `
+      <p class="body-text">
+        ArgoCD's job is narrow: <strong>keep the cluster identical to Git</strong>.
+        Every 3 minutes (or on webhook) it diffs the folder against the cluster.
+        If they diverge — <code style="color:var(--accent);font-size:11px;">kubectl apply</code>.
+      </p>
+      <div class="q-layout">
+        <div class="q-side">
+          <div class="q-header">
+            <div class="q-icon" style="background:rgba(0,212,255,0.1);color:var(--accent);">◎</div>
+            <div class="q-tool">ArgoCD knows:</div>
+          </div>
+          <div class="q-status" style="color:var(--accent);">Synced ✓ · Healthy ✓</div>
+          <div class="q-answer">
+            Is the Kubernetes manifest present in the cluster?<br>
+            Does <code style="font-size:10px;">.status.conditions</code> say Healthy?<br><br>
+            <strong style="color:var(--text)">That is the entire scope of its knowledge.</strong>
+          </div>
+        </div>
+        <div class="q-side">
+          <div class="q-header">
+            <div class="q-icon" style="background:rgba(255,107,53,0.1);color:var(--accent2);">✕</div>
+            <div class="q-tool">ArgoCD does NOT know:</div>
+          </div>
+          <div class="q-status" style="color:var(--accent2);">No AWS credentials</div>
+          <div class="q-answer">
+            Whether the S3 bucket actually exists in <code style="font-size:10px;">eu-west-1</code>.<br>
+            Whether the RDS instance is accepting connections.<br><br>
+            <strong style="color:var(--text)">Its job ends at kubectl apply.</strong>
+          </div>
+        </div>
+      </div>
+      <div class="section-label" style="margin-top:12px;">Check ArgoCD state</div>
+      ${cmd('kubectl get applications -n argocd', 'See all ArgoCD applications and their sync status')}
+      ${cmd('kubectl get applications -n argocd -o wide', 'Full status including health')}
+    `
+  },
+  {
+    label: 'Crossplane: AWS Bridge',
+    desc: 'Turns AWS resources into K8s objects',
+    title: 'Crossplane: the bridge to AWS.',
+    subtitle: '// READY=True means the bucket exists. not just the manifest.',
+    body: () => `
+      <p class="body-text">
+        When ArgoCD applies the <code style="color:var(--accent);font-size:11px;">Bucket</code> manifest,
+        Crossplane's controller picks it up and calls the <strong>real AWS S3 API</strong>.
+        It then writes the result back into the object's <code style="font-size:11px;color:var(--accent)">.status.conditions</code>.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;">
+        <div>
+          <div style="font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent2);margin-bottom:6px;">After Crossplane reconciles</div>
+          <div class="code-block simple">
+<span class="cy">status</span><span class="cw">:</span>
+<span class="cw">  </span><span class="cy">conditions</span><span class="cw">:</span>
+<span class="cw">    - </span><span class="cy">type</span><span class="cw">: Ready</span>
+<span class="cw">      </span><span class="cy">status</span><span class="cw">: </span><span class="cg">"True"</span>
+<span class="cm">      # bucket exists in AWS</span>
+<span class="cw">    - </span><span class="cy">type</span><span class="cw">: Synced</span>
+<span class="cw">      </span><span class="cy">status</span><span class="cw">: </span><span class="cg">"True"</span>
+<span class="cm">      # desired == observed</span>
+          </div>
+        </div>
+        <div class="insight-card" style="display:flex;flex-direction:column;gap:10px;">
+          <div class="ic-title">The self-healing loop</div>
+          <div class="ic-body">
+            Crossplane runs this check <strong style="color:var(--text)">every few seconds</strong>, not on demand.<br><br>
+            Someone deletes the bucket from the AWS Console?<br>
+            Crossplane detects <code style="font-size:10px;">READY=False</code> on the next loop.<br>
+            <span style="color:var(--green)">Recreates it. ArgoCD shows green again.</span><br><br>
+            No alert. No incident. <strong style="color:var(--text)">Git wins.</strong>
+          </div>
+        </div>
+      </div>
+      <p class="body-text">
+        ArgoCD reads <code style="font-size:11px;color:var(--accent)">.status.conditions</code> from the Bucket object.
+        A <code style="font-size:11px;color:var(--green)">Deployment</code> and an <code style="font-size:11px;color:var(--green)">S3 Bucket</code>
+        look identical to ArgoCD — both are Kubernetes objects with status conditions.
+        <em>One pane of glass.</em>
+      </p>
+      <div class="section-label">Read the live status</div>
+      ${cmd('kubectl get buckets -A', 'See READY and SYNCED columns for all buckets')}
+      ${cmd('kubectl describe bucket argocd-demo-bucket 2>/dev/null || kubectl get buckets -A', "Inspect a bucket's status conditions")}
+    `
+  },
+  {
+    label: 'Gitea Actions',
+    desc: 'The human-friendly interface',
+    title: 'Gitea Actions: the human interface.',
+    subtitle: '// a form replaces raw YAML. fill it in, git commit happens automatically.',
+    body: () => `
+      <p class="body-text">
+        Raw YAML in a folder is powerful but hostile to humans.
+        Gitea Actions wraps it in a <strong>validated, parameterised form</strong>:
+        dropdowns prevent typos, constraints prevent invalid inputs.
+        Non-engineers can provision infrastructure without knowing Crossplane.
+      </p>
+      <div class="pipeline-container">
+        <div class="pipeline" id="pipeline">
+          <div class="p-node" id="pn-git">
+            <div class="p-icon git-node"><span>⑃</span><span class="status-badge synced" id="badge-git">MERGED</span></div>
+            <div class="p-label">Git</div><div class="p-sublabel">source of truth</div>
+          </div>
+          <div class="p-arrow" id="pa-1"><div class="arrow-line"><div class="arrow-pulse"></div></div><div class="arrow-head"></div><div class="arrow-label">webhook</div></div>
+          <div class="p-node" id="pn-actions">
+            <div class="p-icon actions-node"><span>⚡</span><span class="status-badge synced" id="badge-actions">PASSED</span></div>
+            <div class="p-label">Actions</div><div class="p-sublabel">generates YAML + commits</div>
+          </div>
+          <div class="p-arrow" id="pa-2"><div class="arrow-line"><div class="arrow-pulse"></div></div><div class="arrow-head"></div><div class="arrow-label">auto-sync</div></div>
+          <div class="p-node" id="pn-argo">
+            <div class="p-icon argo-node"><span>◎</span><span class="status-badge synced" id="badge-argo">SYNCED</span></div>
+            <div class="p-label">ArgoCD</div><div class="p-sublabel">Git → cluster</div>
+          </div>
+          <div class="p-arrow" id="pa-3"><div class="arrow-line"><div class="arrow-pulse"></div></div><div class="arrow-head"></div><div class="arrow-label">kubectl apply</div></div>
+          <div class="p-node" id="pn-xp">
+            <div class="p-icon crossplane-node"><span>✕</span><span class="status-badge ready" id="badge-xp">READY</span></div>
+            <div class="p-label">Crossplane</div><div class="p-sublabel">cluster → AWS</div>
+          </div>
+          <div class="p-arrow" id="pa-4"><div class="arrow-line"><div class="arrow-pulse"></div></div><div class="arrow-head"></div><div class="arrow-label">AWS API</div></div>
+          <div class="p-node" id="pn-aws">
+            <div class="p-icon aws-node"><span>☁</span><span class="status-badge ready" id="badge-aws">EXISTS</span></div>
+            <div class="p-label">AWS</div><div class="p-sublabel">real resource</div>
+          </div>
+        </div>
+        <div id="pipeline-message" style="text-align:center;margin:8px 0;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);min-height:18px;"></div>
+        <button class="run-demo-btn" onclick="runPipelineAnimation()">▶ RUN DEMO</button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a class="open-btn gitea-btn" href="#" data-config="gitea-actions" target="_blank">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>Open Gitea Actions
+          </a>
+          <a class="open-btn argo-btn" href="#" data-config="argo-apps" target="_blank">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Open ArgoCD
+          </a>
+        </div>
+      </div>
+      <div class="section-label" style="margin-top:12px;">Check the runner</div>
+      ${cmd('kubectl get pods -n gitea', 'See the Actions runner pod')}
+      ${cmd('kubectl logs -n gitea deploy/gitea-runner --tail=20 2>/dev/null || kubectl get pods -n gitea', 'Recent runner activity')}
+    `
+  },
+  {
+    label: 'The Full Picture',
+    desc: 'Four layers. One enforced contract.',
+    title: 'The full picture.',
+    subtitle: '// each layer does one thing. together they are unstoppable.',
+    body: () => `
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>Layer</th><th>Answers</th><th>Does not answer</th><th>When it runs</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="layer-badge"><span class="layer-dot" style="background:var(--accent2)"></span>Git</span></td>
+            <td>What should exist?</td>
+            <td style="color:var(--muted)">Whether it does exist</td>
+            <td style="color:var(--muted)">Always — source of truth</td>
+          </tr>
+          <tr>
+            <td><span class="layer-badge"><span class="layer-dot" style="background:var(--accent)"></span>Gitea Actions</span></td>
+            <td>Valid input → YAML → commit</td>
+            <td style="color:var(--muted)">Drift after the fact</td>
+            <td style="color:var(--muted)">On form submit</td>
+          </tr>
+          <tr>
+            <td><span class="layer-badge"><span class="layer-dot" style="background:#f97316"></span>ArgoCD</span></td>
+            <td>Is Git in the cluster?</td>
+            <td style="color:var(--muted)">Is the cloud resource real?</td>
+            <td style="color:var(--muted)">Continuously — every sync</td>
+          </tr>
+          <tr>
+            <td><span class="layer-badge"><span class="layer-dot" style="background:var(--green)"></span>Crossplane</span></td>
+            <td>Does AWS match desired state?</td>
+            <td style="color:var(--muted)">Who made the change</td>
+            <td style="color:var(--muted)">Continuously — every loop</td>
+          </tr>
+          <tr>
+            <td><span class="layer-badge"><span class="layer-dot" style="background:var(--muted)"></span>AWS</span></td>
+            <td>Real resource exists</td>
+            <td style="color:var(--muted)">Any of the above</td>
+            <td style="color:var(--muted)">Managed by Crossplane</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="bottom-line">
+        A file committed to Git ends with a real cloud resource in AWS.<br>
+        Every step is observable, auditable, and reversible via <code style="color:var(--accent)">git revert</code>.
+      </div>
+      <div class="section-label" style="margin-top:14px;">Full system check</div>
+      ${cmd('kubectl get applications -n argocd', 'ArgoCD — Git sync status')}
+      ${cmd('kubectl get managed -A', 'Crossplane — all managed resources')}
+      ${cmd('kubectl get buckets -A', 'S3 buckets declared in this cluster')}
+    `
+  }
+];
+
+// ── HELPER: clickable command block ──────────────────────────────────────────
+function cmd(command, hint) {
+  const b64 = btoa(command + '\r');
+  return `<div class="cmd-block" onclick="sendB64('${b64}'); document.getElementById('terminal-section').scrollIntoView({behavior:'smooth'})">
+    <span class="cmd-arrow">▶</span>
+    <span class="cmd-text">${command}</span>
+    <span class="cmd-hint">${hint}</span>
+  </div>`;
+}
+
+function sendB64(b64) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'b64', data: b64 }));
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let current = 0;
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderSidebar() {
+  const list = document.getElementById('step-list');
+  list.innerHTML = steps.map((s, i) => `
+    <div class="step-item ${i === current ? 'active' : ''} ${i < current ? 'completed' : ''}"
+         onclick="goTo(${i})">
+      <div class="step-num">${i < current ? '✓' : i + 1}</div>
+      <div class="step-info">
+        <div class="step-label">${s.label}</div>
+        <div class="step-desc">${s.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderContent() {
+  const s = steps[current];
+  document.getElementById('step-tag').textContent = `Step ${current + 1} of ${steps.length}`;
+  document.getElementById('content-title').textContent = s.title;
+  document.getElementById('content-subtitle').textContent = s.subtitle;
+  document.getElementById('content-body').innerHTML = s.body();
+  document.getElementById('nav-counter').textContent = `${current + 1} / ${steps.length}`;
+  document.getElementById('btn-prev').disabled = current === 0;
+  document.getElementById('btn-next').disabled = current === steps.length - 1;
+  document.getElementById('progress-fill').style.width = `${((current + 1) / steps.length) * 100}%`;
+
+  // Reset pipeline if navigated away and back
+  if (current === 6) setTimeout(resetPipeline, 100);
+}
+
+function patchConfigLinks() {
+  if (!window._workshopConfig) return;
+  const { giteaUrl, argoUrl, demoRepo } = window._workshopConfig;
+  const urlMap = {
+    'gitea-actions': `${giteaUrl}/${demoRepo}/actions?workflow=bucket-deploy.yaml&actor=0&status=0`,
+    'argo-apps':     `${argoUrl}/applications?showFavorites=false&proj=&sync=&autoSync=&health=&namespace=&cluster=&labels=`,
+  };
+  document.querySelectorAll('[data-config]').forEach(el => {
+    const key = el.getAttribute('data-config');
+    if (urlMap[key]) el.href = urlMap[key];
+  });
+}
+
+function goTo(n) {
+  current = n;
+  renderSidebar();
+  renderContent();
+  patchConfigLinks();
+  document.getElementById('content-body').scrollTop = 0;
+}
+
+function nextStep() { if (current < steps.length - 1) goTo(current + 1); }
+function prevStep() { if (current > 0) goTo(current - 1); }
+
+// ── PIPELINE ANIMATION ───────────────────────────────────────────────────────
+let pipelineRunning = false;
+
+function resetPipeline() {
+  ['pn-git','pn-actions','pn-argo','pn-xp','pn-aws'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('visible');
+  });
+  ['pa-1','pa-2','pa-3','pa-4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('visible', 'active-arrow');
+  });
+  ['badge-git','badge-actions','badge-argo','badge-xp','badge-aws'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+  const msg = document.getElementById('pipeline-message');
+  if (msg) msg.textContent = '';
+  pipelineRunning = false;
+}
+
+async function runPipelineAnimation() {
+  if (pipelineRunning) return;
+  pipelineRunning = true;
+  resetPipeline();
+  pipelineRunning = true;
+  await sleep(200);
+
+  const msg = document.getElementById('pipeline-message');
+  const steps_anim = [
+    { node:'pn-git',     badge:'badge-git',     arrow:null,  message:'Merge to main → pipeline triggered' },
+    { node:null,         badge:null,             arrow:'pa-1', message:'Webhook fires Gitea Actions...' },
+    { node:'pn-actions', badge:'badge-actions',  arrow:null,  message:'Actions: ordered provisioning, waiting for READY=True...' },
+    { node:null,         badge:null,             arrow:'pa-2', message:'ArgoCD detects diff between Git and cluster...' },
+    { node:'pn-argo',    badge:'badge-argo',     arrow:null,  message:'ArgoCD: kubectl apply — manifest is now in the cluster' },
+    { node:null,         badge:null,             arrow:'pa-3', message:'Crossplane controller picks up the new object...' },
+    { node:'pn-xp',      badge:'badge-xp',       arrow:null,  message:'Crossplane: calling AWS API... reconciling desired vs observed...' },
+    { node:null,         badge:null,             arrow:'pa-4', message:'AWS API accepting the resource...' },
+    { node:'pn-aws',     badge:'badge-aws',      arrow:null,  message:'✓ Bucket exists in AWS. READY=True. ArgoCD shows Healthy. Git wins.' },
+  ];
+
+  for (const step of steps_anim) {
+    if (step.node) { const el = document.getElementById(step.node); if (el) el.classList.add('visible'); }
+    if (step.arrow) { const el = document.getElementById(step.arrow); if (el) el.classList.add('visible', 'active-arrow'); }
+    if (step.message && msg) msg.textContent = step.message;
+    await sleep(900);
+    if (step.badge) { const el = document.getElementById(step.badge); if (el) el.classList.add('show'); await sleep(300); }
+  }
+  pipelineRunning = false;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── TERMINAL (xterm.js) ───────────────────────────────────────────────────────
+const term = new Terminal({
+  theme: {
+    background: '#0d1117', foreground: '#e6edf3',
+    cursor: '#58a6ff', cursorAccent: '#0d1117',
+    selectionBackground: '#264f78',
+    black:'#484f58', red:'#ff7b72', green:'#3fb950', yellow:'#d29922',
+    blue:'#58a6ff', magenta:'#bc8cff', cyan:'#39c5cf', white:'#b1bac4',
+    brightBlack:'#6e7681', brightRed:'#ffa198', brightGreen:'#56d364',
+    brightYellow:'#e3b341', brightBlue:'#79c0ff', brightMagenta:'#d2a8ff',
+    brightCyan:'#56d4dd', brightWhite:'#f0f6fc',
+  },
+  fontFamily: '"Cascadia Code", "Fira Code", "JetBrains Mono", Menlo, monospace',
+  fontSize: 13,
+  lineHeight: 1.4,
+  cursorBlink: true,
+  cursorStyle: 'block',
+  scrollback: 5000,
+  allowProposedApi: true,
+});
+
+const fitAddon  = new FitAddon.FitAddon();
+const webLinks  = new WebLinksAddon.WebLinksAddon();
+
+term.loadAddon(fitAddon);
+term.loadAddon(webLinks);
+term.open(document.getElementById('terminal-container'));
+fitAddon.fit();
+
+let ws, attachAddon;
+
+function connect() {
+  ws = new WebSocket(`ws://${location.host}`);
+  ws.onopen = () => {
+    attachAddon = new AttachAddon.AttachAddon(ws);
+    term.loadAddon(attachAddon);
+    sendResize();
+    updateStatus('connected');
+  };
+  ws.onclose = () => { updateStatus('disconnected'); setTimeout(connect, 3000); };
+  ws.onerror = () => ws.close();
+}
+
+function sendResize() {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
+  }
+}
+
+function sendText(text) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(text);
+}
+
+function updateStatus(state) {
+  const dot   = document.getElementById('status-dot');
+  const label = document.getElementById('status-label');
+  if (state === 'connected') {
+    dot.style.background = '#3fb950';
+    label.textContent = 'connected';
+  } else {
+    dot.style.background = '#ff7b72';
+    label.textContent = 'reconnecting…';
+  }
+}
+
+window.addEventListener('resize', () => { fitAddon.fit(); sendResize(); });
+term.onResize(sendResize);
+
+// Keyboard navigation (← →) — only when content area is NOT focused
+document.addEventListener('keydown', e => {
+  if (document.activeElement === document.getElementById('terminal-container')) return;
+  if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') nextStep();
+  if (e.key === 'ArrowLeft')  prevStep();
+});
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderSidebar();
+renderContent();
+
+// Fetch runtime URLs from server, patch all data-config links
+fetch('/config')
+  .then(r => r.json())
+  .then(({ giteaUrl, argoUrl, demoRepo }) => {
+    const urlMap = {
+      'gitea-actions': `${giteaUrl}/${demoRepo}/actions?workflow=bucket-deploy.yaml&actor=0&status=0`,
+      'argo-apps':     `${argoUrl}/applications?showFavorites=false&proj=&sync=&autoSync=&health=&namespace=&cluster=&labels=`,
+    };
+    document.querySelectorAll('[data-config]').forEach(el => {
+      const key = el.getAttribute('data-config');
+      if (urlMap[key]) el.href = urlMap[key];
+    });
+    // Also patch open-btns rendered inside step bodies (they are in the DOM at this point)
+    // Re-render will handle future steps; store config globally for cmd() blocks
+    window._workshopConfig = { giteaUrl, argoUrl, demoRepo };
+  })
+  .catch(() => {
+    // Fallback to localhost if /config fails (local dev without setup.py)
+    window._workshopConfig = {
+      giteaUrl: 'http://localhost:30080',
+      argoUrl:  'http://localhost:8080',
+      demoRepo: 'admin/demo-repo',
+    };
+  });
+
+connect();
+</script>
+</body>
+</html>

@@ -154,6 +154,13 @@ crossplane:
       cpu: 100m
       memory: 128Mi
 
+# ── Tutorial ─────────────────────────────────────────────────────────────────────
+# Interactive GitOps workshop UI with embedded terminal (node-pty + xterm.js)
+# Accessible at http://localhost:4000 on docker-desktop (LoadBalancer)
+tutorial:
+  enabled: true
+  port: 4000
+
 # ── Pulumi Kubernetes Operator subchart ───────────────────────────────────────────
 # Ref: https://github.com/pulumi/pulumi-kubernetes-operator
 pulumi-kubernetes-operator:

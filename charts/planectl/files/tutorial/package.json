@@ -1,0 +1,20 @@
+{
+  "name": "gitops-workshop-combined",
+  "version": "1.0.0",
+  "description": "GitOps workshop tutorial with live terminal — KodeKloud-style",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "chmod +x node_modules/node-pty/prebuilds/darwin-x64/spawn-helper node_modules/node-pty/prebuilds/darwin-arm64/spawn-helper 2>/dev/null || true"
+  },
+  "dependencies": {
+    "@xterm/xterm": "^5.5.0",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/addon-web-links": "^0.11.0",
+    "@xterm/addon-search": "^0.15.0",
+    "@xterm/addon-attach": "^0.11.0",
+    "node-pty": "^1.0.0",
+    "ws": "^8.18.0",
+    "express": "^4.21.0"
+  }
+}
