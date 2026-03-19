@@ -39,4 +39,53 @@ subjects:
   - kind: ServiceAccount
     name: planectl-init
     namespace: {{ .Release.Namespace }}
+---
+# The Pulumi Automation API workspace pods run as the default ServiceAccount and
+# need to perform TokenReviews for gRPC auth. Without this the workspace fails
+# with "TokenReview API is unavailable".
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Namespace }}:default:system:auth-delegator
+  labels:
+    {{- include "planectl.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:auth-delegator
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: {{ .Release.Namespace }}
+---
+# The Pulumi workspace creates Namespaces and ResourceQuotas on behalf of the
+# demo program. The default SA needs these cluster-scoped permissions.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Namespace }}-pulumi-workspace
+  labels:
+    {{- include "planectl.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources: ["namespaces"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["resourcequotas"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Namespace }}:default:pulumi-workspace
+  labels:
+    {{- include "planectl.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Namespace }}-pulumi-workspace
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: {{ .Release.Namespace }}
 {{- end }}

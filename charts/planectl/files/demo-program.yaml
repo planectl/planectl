@@ -3,65 +3,61 @@ kind: Program
 metadata:
   name: demo-program
   namespace: gitops
-spec:
-  program:
-    # Pulumi YAML DSL -- defines Kubernetes resources inline.
-    # ArgoCD syncs this CR; the Pulumi Operator executes it.
-    # Change this file, push to git, ArgoCD applies it, operator reconciles.
-    name: demo-program
-    runtime: yaml
-    resources:
+# 'program' is a top-level field on this CRD (not nested under spec).
+# runtime is always yaml for this CRD type -- no explicit field needed.
+program:
+  resources:
 
-      team-alpha-ns:
-        type: kubernetes:core/v1:Namespace
-        properties:
-          metadata:
-            name: team-alpha
-            labels:
-              managed-by: pulumi
-              team: alpha
+    team-alpha-ns:
+      type: kubernetes:core/v1:Namespace
+      properties:
+        metadata:
+          name: team-alpha
+          labels:
+            managed-by: pulumi
+            team: alpha
 
-      team-alpha-quota:
-        type: kubernetes:core/v1:ResourceQuota
-        properties:
-          metadata:
-            name: default-quota
-            namespace: ${team-alpha-ns.metadata.name}
-          spec:
-            hard:
-              pods: "10"
-              requests.cpu: "2"
-              requests.memory: "4Gi"
-              limits.cpu: "4"
-              limits.memory: "8Gi"
-        options:
-          parent: ${team-alpha-ns}
+    team-alpha-quota:
+      type: kubernetes:core/v1:ResourceQuota
+      properties:
+        metadata:
+          name: default-quota
+          namespace: ${team-alpha-ns.metadata.name}
+        spec:
+          hard:
+            pods: "10"
+            requests.cpu: "2"
+            requests.memory: "4Gi"
+            limits.cpu: "4"
+            limits.memory: "8Gi"
+      options:
+        parent: ${team-alpha-ns}
 
-      team-beta-ns:
-        type: kubernetes:core/v1:Namespace
-        properties:
-          metadata:
-            name: team-beta
-            labels:
-              managed-by: pulumi
-              team: beta
+    team-beta-ns:
+      type: kubernetes:core/v1:Namespace
+      properties:
+        metadata:
+          name: team-beta
+          labels:
+            managed-by: pulumi
+            team: beta
 
-      team-beta-quota:
-        type: kubernetes:core/v1:ResourceQuota
-        properties:
-          metadata:
-            name: default-quota
-            namespace: ${team-beta-ns.metadata.name}
-          spec:
-            hard:
-              pods: "10"
-              requests.cpu: "2"
-              requests.memory: "4Gi"
-              limits.cpu: "4"
-              limits.memory: "8Gi"
-        options:
-          parent: ${team-beta-ns}
+    team-beta-quota:
+      type: kubernetes:core/v1:ResourceQuota
+      properties:
+        metadata:
+          name: default-quota
+          namespace: ${team-beta-ns.metadata.name}
+        spec:
+          hard:
+            pods: "10"
+            requests.cpu: "2"
+            requests.memory: "4Gi"
+            limits.cpu: "4"
+            limits.memory: "8Gi"
+      options:
+        parent: ${team-beta-ns}
 
-    outputs:
-      alpha_namespace: ${team-alpha-ns.metadata.name}
-      beta_namespace:  ${team-beta-ns.metadata.name}
+  outputs:
+    alpha_namespace: ${team-alpha-ns.metadata.name}
+    beta_namespace:  ${team-beta-ns.metadata.name}
