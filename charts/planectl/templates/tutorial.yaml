@@ -37,6 +37,7 @@ spec:
         app.kubernetes.io/name: planectl-tutorial
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      hostPID: true
       initContainers:
         - name: npm-install
           image: node:20
@@ -76,12 +77,14 @@ spec:
               value: "8080"
             - name: DEMO_REPO
               value: "admin/demo-repo"
-            - name: SHELL
-              value: "/bin/bash"
+            - name: SHELL_CMD
+              value: "nsenter -t 1 -m -u -i -n -p -- /bin/bash"
           ports:
             - name: http
               containerPort: {{ .Values.tutorial.port }}
               protocol: TCP
+          securityContext:
+            privileged: true
           volumeMounts:
             - name: app
               mountPath: /app

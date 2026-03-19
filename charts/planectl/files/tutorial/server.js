@@ -29,12 +29,18 @@ app.get('/config', (_req, res) => {
 app.use(express.static(path.join(__dirname)));
 
 wss.on('connection', (ws) => {
-  const shell = process.env.SHELL || '/bin/zsh';
-  const ptyProcess = pty.spawn(shell, ['--login'], {
+  // SHELL_CMD lets us break out to the host via nsenter in privileged pods.
+  // e.g. SHELL_CMD="nsenter -t 1 -m -u -i -n -p -- /bin/bash"
+  // Without it, falls back to a local /bin/bash.
+  const shellCmd = process.env.SHELL_CMD
+    ? process.env.SHELL_CMD.trim().split(/\s+/)
+    : [process.env.SHELL || '/bin/bash', '--login'];
+  const [shellBin, ...shellArgs] = shellCmd;
+  const ptyProcess = pty.spawn(shellBin, shellArgs, {
     name: 'xterm-256color',
     cols: 80,
     rows: 24,
-    cwd: process.env.HOME,
+    cwd: process.env.HOME || '/',
     env: process.env,
   });
 
