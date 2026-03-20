@@ -1,12 +1,13 @@
 apiVersion: v2
 name: planectl
 description: |
-  One-command management cluster: Gitea + ArgoCD + Crossplane + Pulumi Operator,
-  all wired together via readable YAML in wiring/. A single helm install bootstraps
-  the full pipeline -- git server, CD engine, cloud controller, and k8s operator.
+  One helm install. Four vanilla upstream CNCF charts (Gitea, ArgoCD,
+  Crossplane, Pulumi Operator) pre-wired and ready to use as a GitOps
+  management platform. All connections live in readable wiring/ YAML files.
+  Optional: KEDA for event-driven autoscaling.
 type: application
-version: 0.5.0
-appVersion: "0.5.0"
+version: 0.6.0
+appVersion: "0.6.0"
 keywords:
   - gitops
   - gitea
@@ -38,3 +39,7 @@ dependencies:
     version: "2.5.1"
     repository: oci://ghcr.io/pulumi/helm-charts
     condition: pulumi-kubernetes-operator.enabled
+  - name: keda
+    version: "2.16.0"
+    repository: https://kedacore.github.io/charts
+    condition: keda.enabled

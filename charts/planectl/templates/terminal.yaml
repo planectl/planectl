@@ -139,6 +139,8 @@ metadata:
   labels:
     {{- include "planectl.labels" . | nindent 4 }}
     app.kubernetes.io/component: terminal
+  annotations:
+    planectl/security-note: "Unauthenticated shell access. Disable or proxy for shared clusters."
 spec:
   type: LoadBalancer
   selector:

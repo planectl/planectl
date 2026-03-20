@@ -165,9 +165,14 @@ crossplane:
       cpu: 100m
       memory: 128Mi
 
-# ── Terminal ──────────────────────────────────────────────────────────────────────
-# xterm.js cockpit into the running management cluster (kubectl, helm, gitea-cli)
-# Accessible at http://localhost:4000 (LoadBalancer)
+# ── Terminal ──────────────────────────────────────────────────────────────────
+# xterm.js browser terminal — kubectl, helm, and gitea-cli pre-configured.
+# Useful cockpit for local demos. For remote/shared clusters, disable this
+# or place it behind an authenticating proxy (oauth2-proxy + Okta/GitHub/etc).
+#
+# To disable:  --set terminal.enabled=false
+# To secure:   add an oauth2-proxy sidecar and set terminal.authProxy.enabled=true
+#              (see wiring examples in the README)
 terminal:
   enabled: true
   port: 4000
@@ -183,3 +188,25 @@ pulumi-kubernetes-operator:
     limits:
       cpu: 300m
       memory: 256Mi
+
+# ── KEDA (optional) ───────────────────────────────────────────────────────────
+# Kubernetes Event-Driven Autoscaler — scales runners and workloads on
+# queue depth, Prometheus metrics, or any KEDA trigger source.
+# Enable to unlock the ScaledObject wiring examples.
+keda:
+  enabled: false
+  resources:
+    operator:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 150m
+        memory: 256Mi
+    metricServer:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 256Mi

@@ -90,6 +90,15 @@ spec:
                   /wiring/argocd-app-crossplane-buckets.yaml | kubectl apply -f -
               fi
 
+              if [ "$KEDA_ENABLED" = "true" ]; then
+                echo "KEDA enabled -- applying runner ScaledObject..."
+                sed \
+                  -e "s|\\\$GITEA_NS|${GITEA_NS}|g" \
+                  -e "s|\\\$GITEA_USER|${GITEA_USER}|g" \
+                  -e "s|\\\$DEMO_REPO|${DEMO_REPO}|g" \
+                  /wiring/keda-runner-scaledobject.yaml | kubectl apply -f -
+              fi
+
               echo "=== planectl wiring complete ==="
           env:
             - name: ARGOCD_NS
@@ -102,6 +111,10 @@ spec:
               value: {{ .Values.gitea.gitea.admin.username | quote }}
             - name: AWS_ENABLED
               value: {{ .Values.aws.enabled | quote }}
+            - name: KEDA_ENABLED
+              value: {{ .Values.keda.enabled | quote }}
+            - name: DEMO_REPO
+              value: "demo-repo"
           volumeMounts:
             - name: wiring
               mountPath: /wiring

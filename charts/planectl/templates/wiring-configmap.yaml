@@ -22,4 +22,6 @@ data:
 {{ .Files.Get "wiring/pulumi-stack.yaml" | indent 4 }}
   pulumi-program.yaml: |
 {{ .Files.Get "wiring/pulumi-program.yaml" | indent 4 }}
+  keda-runner-scaledobject.yaml: |
+{{ .Files.Get "wiring/keda-runner-scaledobject.yaml" | indent 4 }}
 {{- end }}

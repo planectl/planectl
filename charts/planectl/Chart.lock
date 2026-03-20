@@ -11,5 +11,8 @@ dependencies:
 - name: pulumi-kubernetes-operator
   repository: oci://ghcr.io/pulumi/helm-charts
   version: 2.5.1
-digest: sha256:508d9fcef58d4d4f82790fc0c8fc093fa6d080383e92211b2fc07f3129465c31
-generated: "2026-03-19T09:30:23.586434+02:00"
+- name: keda
+  repository: https://kedacore.github.io/charts
+  version: 2.16.0
+digest: sha256:e4fcca1474110d9d75910963a7379de65b43271cc99fb3acb4249162673ead70
+generated: "2026-03-20T05:55:27.159248+02:00"

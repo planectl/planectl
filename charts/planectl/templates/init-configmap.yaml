@@ -1,5 +1,5 @@
 {{- if .Values.init.enabled }}
-# ConfigMap embedding the Python init script and all repo seed files.
+# ConfigMap embedding the shell init script and all repo seed files.
 # Mounted at /scripts inside the init Job container.
 # Pulumi Stack/Program CRs are in wiring/ and applied by the wiring Job.
 apiVersion: v1
@@ -10,8 +10,8 @@ metadata:
   labels:
     {{- include "planectl.labels" . | nindent 4 }}
 data:
-  gitea-init.py: |
-{{ .Files.Get "files/gitea-init.py" | indent 4 }}
+  gitea-init.sh: |
+{{ .Files.Get "files/gitea-init.sh" | indent 4 }}
   ci.yaml: |
 {{ .Files.Get "files/ci.yaml" | indent 4 }}
   crossplane-deploy.yaml: |

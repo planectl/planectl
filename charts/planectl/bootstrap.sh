@@ -139,6 +139,15 @@ fi
 
 helm "${HELM_ARGS[@]}"
 
+echo ""
+echo "  Waiting for init job..."
+kubectl wait --for=condition=complete job/planectl-init \
+  -n "$NAMESPACE" --timeout=10m 2>/dev/null || true
+
+echo "  Waiting for wiring job..."
+kubectl wait --for=condition=complete job/planectl-wiring \
+  -n "$NAMESPACE" --timeout=5m 2>/dev/null || true
+
 echo -e "\n${GREEN}${BOLD}  planectl is up.${NC}"
 echo -e "  Gitea    → http://${HOST}:30080"
 echo -e "  ArgoCD   → http://${HOST}:8080"

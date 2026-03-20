@@ -2,8 +2,56 @@ apiVersion: v1
 entries:
   planectl:
   - apiVersion: v2
+    appVersion: 0.6.0
+    created: "2026-03-20T05:56:25.074696+02:00"
+    dependencies:
+    - condition: gitea.enabled
+      name: gitea
+      repository: https://dl.gitea.com/charts/
+      version: 12.5.0
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 7.8.28
+    - condition: crossplane.enabled
+      name: crossplane
+      repository: https://charts.crossplane.io/stable
+      version: 1.18.5
+    - condition: pulumi-kubernetes-operator.enabled
+      name: pulumi-kubernetes-operator
+      repository: oci://ghcr.io/pulumi/helm-charts
+      version: 2.5.1
+    - condition: keda.enabled
+      name: keda
+      repository: https://kedacore.github.io/charts
+      version: 2.16.0
+    description: 'One helm install. Four vanilla upstream CNCF charts (Gitea, ArgoCD,
+      Crossplane, Pulumi Operator) pre-wired and ready to use as a GitOps management
+      platform. All connections live in readable wiring/ YAML files. Optional: KEDA
+      for event-driven autoscaling. '
+    digest: 46612b182f7c1a9188f8a319c225a1b325f9215df10f257b79ab4998fdc286f7
+    home: https://github.com/drulacosmin/planectl
+    keywords:
+    - gitops
+    - gitea
+    - argocd
+    - crossplane
+    - pulumi
+    - kubernetes
+    - infrastructure-as-code
+    maintainers:
+    - name: drulacosmin
+      url: https://github.com/drulacosmin
+    name: planectl
+    sources:
+    - https://github.com/drulacosmin/planectl
+    type: application
+    urls:
+    - https://drulacosmin.github.io/planectl/planectl-0.6.0.tgz
+    version: 0.6.0
+  - apiVersion: v2
     appVersion: 0.5.0
-    created: "2026-03-20T05:12:25.200562+02:00"
+    created: "2026-03-20T05:56:24.954964+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -47,7 +95,7 @@ entries:
     version: 0.5.0
   - apiVersion: v2
     appVersion: 0.4.2
-    created: "2026-03-20T05:12:25.149803+02:00"
+    created: "2026-03-20T05:56:24.901007+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -90,7 +138,7 @@ entries:
     version: 0.4.2
   - apiVersion: v2
     appVersion: 0.4.1
-    created: "2026-03-20T05:12:25.099654+02:00"
+    created: "2026-03-20T05:56:24.848804+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -133,7 +181,7 @@ entries:
     version: 0.4.1
   - apiVersion: v2
     appVersion: 0.4.0
-    created: "2026-03-20T05:12:25.050438+02:00"
+    created: "2026-03-20T05:56:24.794676+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -176,7 +224,7 @@ entries:
     version: 0.4.0
   - apiVersion: v2
     appVersion: 0.3.0
-    created: "2026-03-20T05:12:24.997842+02:00"
+    created: "2026-03-20T05:56:24.73443+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -219,7 +267,7 @@ entries:
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2026-03-20T05:12:24.944721+02:00"
+    created: "2026-03-20T05:56:24.655842+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -262,7 +310,7 @@ entries:
     version: 0.2.0
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2026-03-20T05:12:24.886439+02:00"
+    created: "2026-03-20T05:56:24.579924+02:00"
     description: A Helm chart for Kubernetes
     digest: 447292346f5a42ac7eb86261405fd85217367f69c6ae10b5e5634a7dd8a06e09
     name: planectl
@@ -270,4 +318,4 @@ entries:
     urls:
     - https://drulacosmin.github.io/planectl/planectl-0.1.0.tgz
     version: 0.1.0
-generated: "2026-03-20T05:12:24.88164+02:00"
+generated: "2026-03-20T05:56:24.578167+02:00"

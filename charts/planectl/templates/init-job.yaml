@@ -1,6 +1,6 @@
 {{- if .Values.init.enabled }}
 # Post-install/post-upgrade hook (weight "0") — Gitea API calls only.
-# Runs the Python init script (from planectl-init-scripts ConfigMap) which:
+# Runs the shell init script (from planectl-init-scripts ConfigMap) which:
 #   - waits for Gitea to be healthy
 #   - creates demo-repo and pushes all seed files
 #   - stores Action secrets (KUBECONFIG_B64, AWS creds)
@@ -29,11 +29,11 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: init
-          image: python:3.12-slim
+          image: alpine/k8s:1.30.2
           command:
             - /bin/sh
             - -c
-            - pip install httpx --quiet && python /scripts/gitea-init.py
+            - sh /scripts/gitea-init.sh
           env:
             - name: GITEA_URL
               value: "http://{{ .Release.Name }}-gitea-http.{{ .Release.Namespace }}.svc.cluster.local:3000"

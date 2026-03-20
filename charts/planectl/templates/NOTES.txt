@@ -1,6 +1,10 @@
 
 planectl has been installed!
 
+All components are vanilla upstream charts — no forks, no private images.
+Inspect the wiring between them:
+  kubectl describe cm planectl-wiring -n {{ .Release.Namespace }}
+
 Two post-install hooks are running in namespace {{ .Release.Namespace }}:
   planectl-init   (weight 0) — sets up Gitea, pushes seed files
   planectl-wiring (weight 10) — applies wiring/ YAML into the cluster

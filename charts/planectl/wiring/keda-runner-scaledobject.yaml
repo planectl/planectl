@@ -1,0 +1,43 @@
+# KEDA ScaledObject — scales the Gitea Actions runner on workflow queue depth.
+# Applied by the wiring Job only when keda.enabled=true.
+#
+# How it works: KEDA polls the Gitea API for pending workflow jobs.
+# When queue depth > 0, it scales the runner Deployment up.
+# When the queue drains it scales back to minReplicaCount.
+#
+# To adapt this for your own workload:
+#   change scaleTargetRef.name and the trigger metadata.
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: gitea-runner-scaler
+  namespace: $GITEA_NS
+spec:
+  scaleTargetRef:
+    name: gitea-runner
+  minReplicaCount: 1
+  maxReplicaCount: 5
+  cooldownPeriod: 60
+  triggers:
+    - type: metrics-api
+      metadata:
+        targetValue: "1"
+        url: "http://gitea-http.$GITEA_NS.svc.cluster.local:3000/api/v1/repos/$GITEA_USER/$DEMO_REPO/actions/tasks?state=waiting&limit=1"
+        valueLocation: "total_count"
+        authMode: "basicAuth"
+      authenticationRef:
+        name: gitea-keda-auth
+---
+apiVersion: keda.sh/v1alpha1
+kind: TriggerAuthentication
+metadata:
+  name: gitea-keda-auth
+  namespace: $GITEA_NS
+spec:
+  secretTargetRef:
+    - parameter: username
+      name: gitea-runner-token
+      key: username
+    - parameter: password
+      name: gitea-runner-token
+      key: token
