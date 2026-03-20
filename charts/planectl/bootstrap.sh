@@ -63,24 +63,11 @@ read -rsp "  Gitea admin password [admin123]: " GITEA_PASS
 echo ""
 GITEA_PASS="${GITEA_PASS:-admin123}"
 
-# ── AWS (optional) ─────────────────────────────────────────────────────────────
-echo -e "\n  AWS credentials — leave blank to skip (add later with helm upgrade)"
-read -rsp "  AWS_ACCESS_KEY_ID: " AWS_KEY; echo ""
-if [[ -n "$AWS_KEY" ]]; then
-  read -rsp "  AWS_SECRET_ACCESS_KEY: " AWS_SECRET; echo ""
-  read -rp  "  AWS region [eu-west-1]: " AWS_REGION
-  AWS_REGION="${AWS_REGION:-eu-west-1}"
-else
-  AWS_SECRET=""
-  AWS_REGION="eu-west-1"
-fi
-
 # ── summary ────────────────────────────────────────────────────────────────────
 echo -e "\n  ──────────────────────────────────────────"
 echo -e "  Namespace  : ${GREEN}${NAMESPACE}${NC}"
 echo -e "  Host       : ${GREEN}${HOST}${NC}"
 echo -e "  API server : ${GREEN}${CLUSTER_API_INTERNAL}${NC}"
-echo -e "  AWS        : ${GREEN}${AWS_KEY:+enabled}${AWS_KEY:-skipped}${NC}"
 echo -e "  ──────────────────────────────────────────"
 echo ""
 read -rp "  Proceed? [Y/n] " CONFIRM
@@ -111,33 +98,14 @@ if [[ "$GITEA_PASS" != "admin123" ]]; then
     --dry-run=client -o yaml | kubectl apply -f -
 fi
 
-# ── optional: AWS credentials ──────────────────────────────────────────────────
-if [[ -n "$AWS_KEY" ]]; then
-  echo "  Writing planectl-aws-credentials Secret..."
-  kubectl create secret generic planectl-aws-credentials \
-    --namespace "$NAMESPACE" \
-    --from-literal=accessKeyId="$AWS_KEY" \
-    --from-literal=secretAccessKey="$AWS_SECRET" \
-    --from-literal=credentials="$(printf '[default]\naws_access_key_id = %s\naws_secret_access_key = %s\n' "$AWS_KEY" "$AWS_SECRET")" \
-    --dry-run=client -o yaml | kubectl apply -f -
-fi
-
 # ── helm install ───────────────────────────────────────────────────────────────
 echo -e "\n${BOLD}  Running helm install...${NC}\n"
 
-HELM_ARGS=(
-  upgrade --install planectl "$CHART_DIR"
-  --namespace "$NAMESPACE"
-  --set "host=${HOST}"
-  --set "gitea.gitea.admin.password=${GITEA_PASS}"
+helm upgrade --install planectl "$CHART_DIR" \
+  --namespace "$NAMESPACE" \
+  --set "host=${HOST}" \
+  --set "gitea.gitea.admin.password=${GITEA_PASS}" \
   --timeout 15m
-)
-
-if [[ -n "$AWS_KEY" ]]; then
-  HELM_ARGS+=(--set "aws.enabled=true")
-fi
-
-helm "${HELM_ARGS[@]}"
 
 echo ""
 echo "  Waiting for init job..."

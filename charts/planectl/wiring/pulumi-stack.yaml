@@ -26,6 +26,18 @@ spec:
       literal:
         value: ""
 
+  # Use the slim base image — yaml runtime needs only the Pulumi CLI binary,
+  # not the full ~3.4 GB pulumi/pulumi image with all language SDKs.
+  workspaceTemplate:
+    spec:
+      image: "pulumi/pulumi-base:latest"
+      imagePullPolicy: IfNotPresent
+      env:
+        - name: PULUMI_HOME
+          value: "/tmp/pulumi"
+        - name: USER
+          value: "pulumi"
+
   destroyOnFinalize: true
   refresh: true
   continueResyncOnCommitMatch: true

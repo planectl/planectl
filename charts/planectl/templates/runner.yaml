@@ -1,8 +1,8 @@
 {{- if .Values.runner.enabled }}
 # Gitea Actions runner: runs workflow jobs in Docker containers on the host.
-# The runner-token Secret is created by the planectl-wiring Job (hook-weight "10").
-# On first install the pod will restart until the wiring job creates the secret --
-# this is expected and Kubernetes will back off gracefully.
+# The runner-token Secret is created by the planectl-init Job (hook-weight "0").
+# On first install the pod stays in CreateContainerConfigError until the init job
+# writes the secret — Kubernetes then starts it automatically with the correct token.
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -54,9 +54,6 @@ spec:
                 secretKeyRef:
                   name: gitea-runner-token
                   key: token
-                  # optional: true allows the pod to start before the init job
-                  # creates the secret -- it will restart until registered.
-                  optional: true
             - name: GITEA_RUNNER_NAME
               value: "planectl-runner"
             - name: GITEA_RUNNER_LABELS
