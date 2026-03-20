@@ -1,12 +1,12 @@
 apiVersion: v2
 name: planectl
 description: |
-  One-command GitOps demo stack: Gitea + ArgoCD + Crossplane + Pulumi Operator,
-  all wired together and ready to use. A single helm install bootstraps the full
-  pipeline -- git server, CD engine, cloud controller, and k8s operator.
+  One-command management cluster: Gitea + ArgoCD + Crossplane + Pulumi Operator,
+  all wired together via readable YAML in wiring/. A single helm install bootstraps
+  the full pipeline -- git server, CD engine, cloud controller, and k8s operator.
 type: application
-version: 0.4.2
-appVersion: "0.4.2"
+version: 0.5.0
+appVersion: "0.5.0"
 keywords:
   - gitops
   - gitea

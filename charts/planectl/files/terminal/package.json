@@ -1,7 +1,7 @@
 {
-  "name": "gitops-workshop-combined",
+  "name": "planectl-terminal",
   "version": "1.0.0",
-  "description": "GitOps workshop tutorial with live terminal — KodeKloud-style",
+  "description": "planectl cockpit terminal — xterm.js + node-pty WebSocket shell",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

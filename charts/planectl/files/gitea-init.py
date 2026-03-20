@@ -9,11 +9,10 @@ Actions performed:
   2. Create demo-repo (idempotent)
   3. Upload workflow + infra files to the repo via Gitea Contents API
   4. Store KUBECONFIG_B64 and optional AWS secrets in repo Actions secrets
-  5. Obtain runner registration token; create/update gitea-runner-token k8s Secret
-  6. Create/update ArgoCD repo Secret (gitea-demo-repo in argocd namespace)
-  7. Create/update ArgoCD Application CRs:
-       - crossplane-buckets  (path: crossplane/buckets)
-       - pulumi-stacks       (path: pulumi/stacks)
+  5. Obtain runner registration token from Gitea API
+  6. Rotate ArgoCD API token (Gitea API)
+  7. Write runner token + ArgoCD token to planectl-wiring-tokens k8s Secret
+     (the wiring Job reads this Secret and applies all wiring YAML)
 """
 
 import base64
@@ -22,27 +21,60 @@ import sys
 import time
 
 import httpx
-from kubernetes import client as k8s_client
-from kubernetes import config as k8s_config
 
 # ── Configuration (injected via env from Helm values) ─────────────────────────
 
-GITEA_URL       = os.environ.get("GITEA_URL", "http://localhost:3000")
-GITEA_EXT_URL   = os.environ.get("GITEA_EXT_URL", "http://localhost:30080")
-GITEA_USER      = os.environ.get("GITEA_ADMIN_USER", "admin")
-GITEA_PASS      = os.environ.get("GITEA_ADMIN_PASS", "admin123")
-DEMO_REPO       = os.environ.get("DEMO_REPO", "demo-repo")
-GITEA_NS        = os.environ.get("GITEA_NS", "default")
-ARGOCD_NS       = os.environ.get("ARGOCD_NS", "default")
-PULUMI_NS       = os.environ.get("PULUMI_NS", "default")
+GITEA_URL         = os.environ.get("GITEA_URL", "http://localhost:3000")
+GITEA_EXT_URL     = os.environ.get("GITEA_EXT_URL", "http://localhost:30080")
+GITEA_USER        = os.environ.get("GITEA_ADMIN_USER", "admin")
+GITEA_PASS        = os.environ.get("GITEA_ADMIN_PASS", "admin123")
+DEMO_REPO         = os.environ.get("DEMO_REPO", "demo-repo")
+GITEA_NS          = os.environ.get("GITEA_NS", "default")
 GITEA_CLUSTER_URL = os.environ.get("GITEA_CLUSTER_URL", GITEA_URL)
 
-KUBECONFIG_B64  = os.environ.get("KUBECONFIG_B64", "")
-AWS_KEY_ID      = os.environ.get("AWS_ACCESS_KEY_ID", "")
-AWS_SECRET      = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
-AWS_REGION      = os.environ.get("AWS_REGION", "eu-west-1")
+KUBECONFIG_B64    = os.environ.get("KUBECONFIG_B64", "")
+AWS_KEY_ID        = os.environ.get("AWS_ACCESS_KEY_ID", "")
+AWS_SECRET        = os.environ.get("AWS_SECRET_ACCESS_KEY", "")
+AWS_REGION        = os.environ.get("AWS_REGION", "eu-west-1")
 
-SCRIPTS_DIR     = "/scripts"
+SCRIPTS_DIR       = "/scripts"
+
+# ── In-cluster Kubernetes API (raw httpx, no python-kubernetes) ───────────────
+
+_K8S_TOKEN = "/var/run/secrets/kubernetes.io/serviceaccount/token"
+_K8S_CA    = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+_K8S_API   = "https://kubernetes.default.svc"
+
+
+def _k8s_headers() -> dict:
+    with open(_K8S_TOKEN) as f:
+        return {"Authorization": f"Bearer {f.read().strip()}"}
+
+
+def k8s_apply_secret(ns: str, name: str, string_data: dict, labels: dict = None):
+    """Create or replace a Secret via the in-cluster Kubernetes API."""
+    body = {
+        "apiVersion": "v1",
+        "kind": "Secret",
+        "metadata": {"name": name, "namespace": ns},
+        "stringData": string_data,
+    }
+    if labels:
+        body["metadata"]["labels"] = labels
+
+    headers = _k8s_headers()
+    base = f"{_K8S_API}/api/v1/namespaces/{ns}/secrets"
+    kw = {"headers": headers, "verify": _K8S_CA, "timeout": 15}
+
+    r = httpx.get(f"{base}/{name}", **kw)
+    if r.status_code == 200:
+        r = httpx.put(f"{base}/{name}", json=body, **kw)
+        log(f"  UPDATED  Secret/{name} in {ns}")
+    else:
+        r = httpx.post(base, json=body, **kw)
+        log(f"  CREATED  Secret/{name} in {ns}")
+    r.raise_for_status()
+
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -91,12 +123,7 @@ class GiteaClient:
         time.sleep(2)  # allow Gitea to finish the init commit
 
     def upsert_file(self, repo_path: str, local_path: str):
-        """Create or update a file in the repo via the Contents API.
-
-        Gitea API:
-          POST .../contents/{path}  — create (no sha)
-          PUT  .../contents/{path}  — update (requires sha of existing blob)
-        """
+        """Create or update a file in the repo via the Contents API."""
         if not os.path.exists(local_path):
             log(f"  SKIP  {local_path} not found")
             return
@@ -109,7 +136,6 @@ class GiteaClient:
             sha = existing.json()["sha"]
             r = self._put(url, json={"message": f"chore: update {repo_path}", "content": encoded, "sha": sha})
         else:
-            # File does not exist yet — use POST to create
             r = self._post(url, json={"message": f"chore: add {repo_path}", "content": encoded})
         r.raise_for_status()
         log(f"  OK    {repo_path}")
@@ -165,7 +191,7 @@ def wait_healthy(max_s: int = 300):
     sys.exit(f"FATAL: Gitea not healthy after {max_s}s")
 
 
-# ── Push repo files ────────────────────────────────────────────────────────────
+# ── Push seed files to repo ────────────────────────────────────────────────────
 
 FILE_MAP = [
     # (local path under SCRIPTS_DIR,              repo path)
@@ -173,8 +199,6 @@ FILE_MAP = [
     ("crossplane-deploy.yaml",   ".gitea/workflows/crossplane-deploy.yaml"),
     ("bucket-deploy.yaml",       ".gitea/workflows/bucket-deploy.yaml"),
     ("argocd-demo-bucket.yaml",  "crossplane/buckets/argocd-demo-bucket.yaml"),
-    ("demo-stack.yaml",          "pulumi/stacks/demo-stack.yaml"),
-    ("demo-program.yaml",        "pulumi/stacks/demo-program.yaml"),
     ("Pulumi.yaml",              "pulumi/programs/demo/Pulumi.yaml"),
     ("__main__.py",              "pulumi/programs/demo/__main__.py"),
     ("requirements.txt",         "pulumi/programs/demo/requirements.txt"),
@@ -182,20 +206,20 @@ FILE_MAP = [
 
 
 def push_files(gitea: GiteaClient):
-    log("\nPushing files to repo...")
+    log("\nPushing seed files to repo...")
     for fname, repo_path in FILE_MAP:
         gitea.upsert_file(repo_path, os.path.join(SCRIPTS_DIR, fname))
 
 
-# ── Store Action secrets ───────────────────────────────────────────────────────
+# ── Store Gitea Actions secrets ────────────────────────────────────────────────
 
-def store_secrets(gitea: GiteaClient):
+def store_gitea_secrets(gitea: GiteaClient):
     log("\nStoring Gitea Actions secrets...")
     if KUBECONFIG_B64:
         gitea.set_secret("KUBECONFIG_B64", KUBECONFIG_B64)
         log("  OK    KUBECONFIG_B64")
     else:
-        log("  SKIP  KUBECONFIG_B64 (not provided -- set init.kubeconfigB64 in values)")
+        log("  SKIP  KUBECONFIG_B64 (create planectl-kubeconfig secret before install)")
     if AWS_KEY_ID and AWS_SECRET:
         gitea.set_secret("AWS_ACCESS_KEY_ID",     AWS_KEY_ID)
         gitea.set_secret("AWS_SECRET_ACCESS_KEY", AWS_SECRET)
@@ -205,111 +229,28 @@ def store_secrets(gitea: GiteaClient):
         log("  SKIP  AWS credentials (not provided)")
 
 
-# ── Kubernetes wiring ──────────────────────────────────────────────────────────
+# ── Write wiring tokens for the wiring Job ─────────────────────────────────────
 
-def _load_k8s():
-    try:
-        k8s_config.load_incluster_config()
-    except k8s_config.ConfigException:
-        k8s_config.load_kube_config()
-    return k8s_client.ApiClient()
+def store_wiring_tokens(gitea: GiteaClient):
+    """Fetch runner + ArgoCD tokens from Gitea; write to k8s Secret.
 
-
-def _apply_secret(v1: k8s_client.CoreV1Api, ns: str, secret: k8s_client.V1Secret):
-    name = secret.metadata.name
-    try:
-        v1.create_namespaced_secret(ns, secret)
-        log(f"  CREATED  Secret/{name} in {ns}")
-    except k8s_client.ApiException as e:
-        if e.status == 409:
-            v1.replace_namespaced_secret(name, ns, secret)
-            log(f"  UPDATED  Secret/{name} in {ns}")
-        else:
-            raise
-
-
-def _apply_argocd_app(coa: k8s_client.CustomObjectsApi, ns: str, body: dict):
-    name = body["metadata"]["name"]
-    group, version, plural = "argoproj.io", "v1alpha1", "applications"
-    try:
-        coa.create_namespaced_custom_object(group, version, ns, plural, body)
-        log(f"  CREATED  Application/{name} in {ns}")
-    except k8s_client.ApiException as e:
-        if e.status == 409:
-            existing = coa.get_namespaced_custom_object(group, version, ns, plural, name)
-            body["metadata"]["resourceVersion"] = existing["metadata"]["resourceVersion"]
-            coa.replace_namespaced_custom_object(group, version, ns, plural, name, body)
-            log(f"  UPDATED  Application/{name} in {ns}")
-        else:
-            raise
-
-
-def wire_k8s(gitea: GiteaClient):
-    log("\nWiring Kubernetes resources...")
-    api = _load_k8s()
-    v1  = k8s_client.CoreV1Api(api)
-    coa = k8s_client.CustomObjectsApi(api)
-
-    # 1. Runner registration token secret
-    runner_token = gitea.get_runner_token()
-    log(f"  Runner token obtained.")
-    _apply_secret(v1, GITEA_NS, k8s_client.V1Secret(
-        api_version="v1",
-        kind="Secret",
-        metadata=k8s_client.V1ObjectMeta(name="gitea-runner-token", namespace=GITEA_NS),
-        string_data={"token": runner_token},
-    ))
-
-    # 2. ArgoCD repository secret (rotates token on each run)
+    The planectl-wiring Job reads this Secret and applies all wiring YAML.
+    """
+    log("\nPreparing wiring tokens...")
     repo_url = f"{GITEA_CLUSTER_URL}/{GITEA_USER}/{DEMO_REPO}.git"
+
+    runner_token = gitea.get_runner_token()
+    log("  Runner token obtained.")
+
     argocd_token = gitea.rotate_token("argocd-token", ["read:repository"])
-    _apply_secret(v1, ARGOCD_NS, k8s_client.V1Secret(
-        api_version="v1",
-        kind="Secret",
-        metadata=k8s_client.V1ObjectMeta(
-            name="gitea-demo-repo",
-            namespace=ARGOCD_NS,
-            labels={"argocd.argoproj.io/secret-type": "repository"},
-        ),
-        data={
-            "type":     b64e("git"),
-            "url":      b64e(repo_url),
-            "username": b64e(GITEA_USER),
-            "password": b64e(argocd_token),
-        },
-    ))
+    log("  ArgoCD token rotated.")
 
-    # 3. ArgoCD Application: crossplane-buckets
-    _apply_argocd_app(coa, ARGOCD_NS, {
-        "apiVersion": "argoproj.io/v1alpha1",
-        "kind": "Application",
-        "metadata": {"name": "crossplane-buckets", "namespace": ARGOCD_NS},
-        "spec": {
-            "project": "default",
-            "source": {"repoURL": repo_url, "targetRevision": "main", "path": "crossplane/buckets"},
-            "destination": {"server": "https://kubernetes.default.svc", "namespace": "default"},
-            "syncPolicy": {
-                "automated": {"prune": True, "selfHeal": True},
-                "syncOptions": ["CreateNamespace=true"],
-            },
-        },
+    k8s_apply_secret(GITEA_NS, "planectl-wiring-tokens", {
+        "RUNNER_TOKEN": runner_token,
+        "ARGOCD_TOKEN": argocd_token,
+        "REPO_URL":     repo_url,
     })
-
-    # 4. ArgoCD Application: pulumi-stacks
-    _apply_argocd_app(coa, ARGOCD_NS, {
-        "apiVersion": "argoproj.io/v1alpha1",
-        "kind": "Application",
-        "metadata": {"name": "pulumi-stacks", "namespace": ARGOCD_NS},
-        "spec": {
-            "project": "default",
-            "source": {"repoURL": repo_url, "targetRevision": "main", "path": "pulumi/stacks"},
-            "destination": {"server": "https://kubernetes.default.svc", "namespace": PULUMI_NS},
-            "syncPolicy": {
-                "automated": {"prune": True, "selfHeal": True},
-                "syncOptions": ["CreateNamespace=true"],
-            },
-        },
-    })
+    log("  planectl-wiring-tokens Secret ready for wiring Job.")
 
 
 # ── Main ───────────────────────────────────────────────────────────────────────
@@ -323,8 +264,8 @@ def main():
     gitea.ensure_repo()
 
     push_files(gitea)
-    store_secrets(gitea)
-    wire_k8s(gitea)
+    store_gitea_secrets(gitea)
+    store_wiring_tokens(gitea)
 
     log("\n=== planectl init complete ===")
 

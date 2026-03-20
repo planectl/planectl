@@ -1,30 +1,35 @@
 
 planectl has been installed!
 
-The post-install init job is running in namespace {{ .Release.Namespace }}.
-It wires Gitea, ArgoCD, Crossplane, and the Pulumi Operator together.
+Two post-install hooks are running in namespace {{ .Release.Namespace }}:
+  planectl-init   (weight 0) — sets up Gitea, pushes seed files
+  planectl-wiring (weight 10) — applies wiring/ YAML into the cluster
 
 Watch progress:
-  kubectl logs -n {{ .Release.Namespace }} -l job-name=planectl-init -f
+  kubectl logs -n {{ .Release.Namespace }} -l job-name=planectl-init   -f
+  kubectl logs -n {{ .Release.Namespace }} -l job-name=planectl-wiring -f
+
+Inspect the wiring:
+  kubectl describe cm planectl-wiring -n {{ .Release.Namespace }}
 
 == Access ===================================================================
 
-Gitea (git server + CI runner)
+Gitea (source of truth)
   http://{{ .Values.host }}:{{ .Values.gitea.service.http.nodePort }}
   Login: {{ .Values.gitea.gitea.admin.username }} / {{ .Values.gitea.gitea.admin.password }}
   Repo:  http://{{ .Values.host }}:{{ .Values.gitea.service.http.nodePort }}/{{ .Values.gitea.gitea.admin.username }}/demo-repo
 
-ArgoCD (GitOps controller)
+ArgoCD (intent delivery)
   http://localhost:8080
   Login: admin / $(kubectl get secret -n {{ .Release.Namespace }} argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
 
-Tutorial (interactive terminal)
-  http://localhost:{{ .Values.tutorial.port }}
+Terminal (cockpit into the cluster)
+  http://localhost:{{ .Values.terminal.port }}
 
 == Next steps ================================================================
 
-1. Check the init job succeeded:
-     kubectl get job planectl-init -n {{ .Release.Namespace }}
+1. Check both hooks succeeded:
+     kubectl get jobs -n {{ .Release.Namespace }}
 
 2. Verify the runner registered:
      http://{{ .Values.host }}:{{ .Values.gitea.service.http.nodePort }}/-/admin/runners

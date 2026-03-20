@@ -1,0 +1,23 @@
+# ArgoCD Applications — what ArgoCD syncs and where.
+# Applied by the planectl-wiring Job; $VARS are substituted at runtime.
+#
+# Add a new Application:
+#   copy one of these blocks, change name/path/namespace, kubectl apply -f it.
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: pulumi-stacks
+  namespace: $ARGOCD_NS
+spec:
+  project: default
+  source:
+    repoURL: $REPO_URL
+    targetRevision: main
+    path: pulumi/stacks
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: $PULUMI_NS
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true]

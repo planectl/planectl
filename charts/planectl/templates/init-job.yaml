@@ -1,11 +1,10 @@
 {{- if .Values.init.enabled }}
-# Post-install/post-upgrade hook that wires the GitOps stack together.
+# Post-install/post-upgrade hook (weight "0") — Gitea API calls only.
 # Runs the Python init script (from planectl-init-scripts ConfigMap) which:
 #   - waits for Gitea to be healthy
-#   - creates demo-repo and pushes all workflow/infra files
+#   - creates demo-repo and pushes all seed files
 #   - stores Action secrets (KUBECONFIG_B64, AWS creds)
-#   - creates the gitea-runner-token k8s Secret
-#   - creates ArgoCD repo Secret and Application CRs
+#   - writes planectl-wiring-tokens Secret for the wiring Job (weight "10")
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -34,7 +33,7 @@ spec:
           command:
             - /bin/sh
             - -c
-            - pip install httpx kubernetes --quiet && python /scripts/gitea-init.py
+            - pip install httpx --quiet && python /scripts/gitea-init.py
           env:
             - name: GITEA_URL
               value: "http://{{ .Release.Name }}-gitea-http.{{ .Release.Namespace }}.svc.cluster.local:3000"
@@ -54,10 +53,12 @@ spec:
               value: {{ .Release.Namespace | quote }}
             - name: PULUMI_NS
               value: {{ .Release.Namespace | quote }}
-            {{- if .Values.init.kubeconfigB64 }}
             - name: KUBECONFIG_B64
-              value: {{ .Values.init.kubeconfigB64 | quote }}
-            {{- end }}
+              valueFrom:
+                secretKeyRef:
+                  name: planectl-kubeconfig
+                  key: kubeconfig
+                  optional: true
             {{- if .Values.aws.enabled }}
             - name: AWS_ACCESS_KEY_ID
               valueFrom:

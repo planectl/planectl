@@ -1,0 +1,119 @@
+{{- if .Values.init.enabled }}
+# Post-install hook that applies all wiring/ YAML files into the cluster.
+# Runs after the init Job (hook-weight "10" > "0").
+# Uses sed for $VAR substitution — no envsubst, no large image pull needed.
+# Inspect what it's doing: kubectl describe cm planectl-wiring -n <namespace>
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: planectl-wiring
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "planectl.labels" . | nindent 4 }}
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: planectl-wiring
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: planectl-init
+      restartPolicy: OnFailure
+      containers:
+        - name: wiring
+          image: alpine/k8s:1.30.2
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              echo "=== planectl wiring ==="
+
+              # Wait for planectl-wiring-tokens Secret (written by the init Job)
+              echo "Waiting for planectl-wiring-tokens..."
+              for i in $(seq 1 60); do
+                kubectl get secret planectl-wiring-tokens -n "$ARGOCD_NS" > /dev/null 2>&1 && break
+                echo "  [$i] not yet ready..."
+                sleep 5
+              done
+
+              # Read dynamic values out of the Secret into local env vars
+              RUNNER_TOKEN=$(kubectl get secret planectl-wiring-tokens -n "$ARGOCD_NS" \
+                -o jsonpath='{.data.RUNNER_TOKEN}' | base64 -d)
+              ARGOCD_TOKEN=$(kubectl get secret planectl-wiring-tokens -n "$ARGOCD_NS" \
+                -o jsonpath='{.data.ARGOCD_TOKEN}' | base64 -d)
+              REPO_URL=$(kubectl get secret planectl-wiring-tokens -n "$ARGOCD_NS" \
+                -o jsonpath='{.data.REPO_URL}' | base64 -d)
+
+              echo "Applying wiring..."
+
+              # sed substitution uses | as delimiter so REPO_URL (which contains /) is safe.
+              # \$VAR in double-quotes expands to literal $VAR for the sed pattern.
+
+              sed \
+                -e "s|\\\$GITEA_NS|${GITEA_NS}|g" \
+                -e "s|\\\$RUNNER_TOKEN|${RUNNER_TOKEN}|g" \
+                /wiring/runner-token-secret.yaml | kubectl apply -f -
+
+              sed \
+                -e "s|\\\$ARGOCD_NS|${ARGOCD_NS}|g" \
+                -e "s|\\\$REPO_URL|${REPO_URL}|g" \
+                -e "s|\\\$GITEA_USER|${GITEA_USER}|g" \
+                -e "s|\\\$ARGOCD_TOKEN|${ARGOCD_TOKEN}|g" \
+                /wiring/argocd-repo-secret.yaml | kubectl apply -f -
+
+              sed \
+                -e "s|\\\$ARGOCD_NS|${ARGOCD_NS}|g" \
+                -e "s|\\\$REPO_URL|${REPO_URL}|g" \
+                -e "s|\\\$PULUMI_NS|${PULUMI_NS}|g" \
+                /wiring/argocd-applications.yaml | kubectl apply -f -
+
+              # Pulumi stack: substitute $PULUMI_NS only.
+              # sed only replaces the exact string $PULUMI_NS so Pulumi ${expr} refs are safe.
+              sed "s|\\\$PULUMI_NS|${PULUMI_NS}|g" \
+                /wiring/pulumi-stack.yaml | kubectl apply -f -
+
+              sed "s|\\\$PULUMI_NS|${PULUMI_NS}|g" \
+                /wiring/pulumi-program.yaml | kubectl apply -f -
+
+              if [ "$AWS_ENABLED" = "true" ]; then
+                echo "AWS enabled -- applying crossplane-buckets Application..."
+                sed \
+                  -e "s|\\\$ARGOCD_NS|${ARGOCD_NS}|g" \
+                  -e "s|\\\$REPO_URL|${REPO_URL}|g" \
+                  /wiring/argocd-app-crossplane-buckets.yaml | kubectl apply -f -
+              fi
+
+              echo "=== planectl wiring complete ==="
+          env:
+            - name: ARGOCD_NS
+              value: {{ .Release.Namespace | quote }}
+            - name: GITEA_NS
+              value: {{ .Release.Namespace | quote }}
+            - name: PULUMI_NS
+              value: {{ .Release.Namespace | quote }}
+            - name: GITEA_USER
+              value: {{ .Values.gitea.gitea.admin.username | quote }}
+            - name: AWS_ENABLED
+              value: {{ .Values.aws.enabled | quote }}
+          volumeMounts:
+            - name: wiring
+              mountPath: /wiring
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: wiring
+          configMap:
+            name: planectl-wiring
+{{- end }}

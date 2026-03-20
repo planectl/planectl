@@ -1,0 +1,20 @@
+# ArgoCD Application for Crossplane S3 bucket resources.
+# Only applied by the wiring Job when aws.enabled=true.
+# Keeping this separate prevents SyncFailed noise on installs without AWS.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane-buckets
+  namespace: $ARGOCD_NS
+spec:
+  project: default
+  source:
+    repoURL: $REPO_URL
+    targetRevision: main
+    path: crossplane/buckets
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions: [CreateNamespace=true]

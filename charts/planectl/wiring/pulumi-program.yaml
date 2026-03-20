@@ -1,8 +1,13 @@
+# Pulumi Program CR — an inline Pulumi program as a Kubernetes object.
+# Applied directly by the wiring Job (not via ArgoCD).
+#
+# To change what Pulumi manages:
+#   edit the resources block below, or point the Stack at a different Program.
 apiVersion: pulumi.com/v1
 kind: Program
 metadata:
   name: demo-program
-  namespace: gitops
+  namespace: $PULUMI_NS
 # 'program' is a top-level field on this CRD (not nested under spec).
 # runtime is always yaml for this CRD type -- no explicit field needed.
 program:

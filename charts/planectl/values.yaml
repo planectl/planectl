@@ -2,23 +2,23 @@
 # Override with --set key=value or -f custom-values.yaml
 
 # ── Host ────────────────────────────────────────────────────────────────────────
-# Hostname used for browser-facing URLs (NOTES output, tutorial links).
+# Hostname used for browser-facing URLs (NOTES output, terminal links).
 # localhost works on Docker Desktop (NodePort + LoadBalancer both bind to localhost).
 # On AWS/remote: set to the server's public IP or hostname.
 host: localhost
 
 # ── Init Job ────────────────────────────────────────────────────────────────────
-# The post-install hook that wires everything together.
+# The post-install hook that sets up Gitea and writes the wiring-tokens Secret.
+# Before helm install, create the kubeconfig Secret manually:
+#   kubectl create namespace gitops
+#   kubectl create secret generic planectl-kubeconfig \
+#     --namespace gitops \
+#     --from-literal=kubeconfig="$(
+#       kubectl config view --minify --flatten \
+#         | sed 's|127.0.0.1|kubernetes.docker.internal|g'
+#     )"
 init:
   enabled: true
-  # base64-encoded kubeconfig injected as a Secret into the tutorial pod.
-  # The tutorial startup patches the server URL automatically, so the sed below
-  # only needs to replace 127.0.0.1. kubernetes.docker.internal is in the TLS cert SANs.
-  # Generate with:
-  #   kubectl config view --minify --flatten \
-  #     | sed 's|127.0.0.1|kubernetes.docker.internal|g' \
-  #     | base64
-  kubeconfigB64: ""
 
 # ── AWS (optional) ──────────────────────────────────────────────────────────────
 # Set enabled: true and provide credentials to install Crossplane AWS providers.
@@ -31,6 +31,8 @@ aws:
 # ── Gitea Actions Runner ─────────────────────────────────────────────────────────
 runner:
   enabled: true
+  image: gitea/act_runner
+  imageTag: "0.2.11"
   dockerSocket: /var/run/docker.sock
   # URL the runner uses to reach Gitea from *inside* Docker containers on the host.
   # Docker containers cannot use "localhost" — they need the host's bridge address.
@@ -163,10 +165,10 @@ crossplane:
       cpu: 100m
       memory: 128Mi
 
-# ── Tutorial ─────────────────────────────────────────────────────────────────────
-# Interactive GitOps workshop UI with embedded terminal (node-pty + xterm.js)
+# ── Terminal ──────────────────────────────────────────────────────────────────────
+# xterm.js cockpit into the running management cluster (kubectl, helm, gitea-cli)
 # Accessible at http://localhost:4000 (LoadBalancer)
-tutorial:
+terminal:
   enabled: true
   port: 4000
 

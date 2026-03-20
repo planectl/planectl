@@ -1,0 +1,25 @@
+{{- if .Values.init.enabled }}
+# ConfigMap embedding all wiring/ YAML files.
+# These are the connections between the four building blocks.
+# Readable with: kubectl describe cm planectl-wiring -n <namespace>
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: planectl-wiring
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "planectl.labels" . | nindent 4 }}
+data:
+  argocd-repo-secret.yaml: |
+{{ .Files.Get "wiring/argocd-repo-secret.yaml" | indent 4 }}
+  runner-token-secret.yaml: |
+{{ .Files.Get "wiring/runner-token-secret.yaml" | indent 4 }}
+  argocd-applications.yaml: |
+{{ .Files.Get "wiring/argocd-applications.yaml" | indent 4 }}
+  argocd-app-crossplane-buckets.yaml: |
+{{ .Files.Get "wiring/argocd-app-crossplane-buckets.yaml" | indent 4 }}
+  pulumi-stack.yaml: |
+{{ .Files.Get "wiring/pulumi-stack.yaml" | indent 4 }}
+  pulumi-program.yaml: |
+{{ .Files.Get "wiring/pulumi-program.yaml" | indent 4 }}
+{{- end }}

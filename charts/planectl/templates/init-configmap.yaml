@@ -1,6 +1,7 @@
 {{- if .Values.init.enabled }}
 # ConfigMap embedding the Python init script and all repo seed files.
 # Mounted at /scripts inside the init Job container.
+# Pulumi Stack/Program CRs are in wiring/ and applied by the wiring Job.
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -19,10 +20,6 @@ data:
 {{ .Files.Get "files/bucket-deploy.yaml" | indent 4 }}
   argocd-demo-bucket.yaml: |
 {{ .Files.Get "files/argocd-demo-bucket.yaml" | indent 4 }}
-  demo-stack.yaml: |
-{{ .Files.Get "files/demo-stack.yaml" | indent 4 }}
-  demo-program.yaml: |
-{{ .Files.Get "files/demo-program.yaml" | indent 4 }}
   Pulumi.yaml: |
 {{ .Files.Get "files/Pulumi.yaml" | indent 4 }}
   __main__.py: |

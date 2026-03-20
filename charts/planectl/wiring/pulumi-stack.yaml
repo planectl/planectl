@@ -1,8 +1,13 @@
+# Pulumi Stack CR — tells the Pulumi Kubernetes Operator which Program to run.
+# Applied directly by the wiring Job (not via ArgoCD).
+#
+# To run a different Pulumi program:
+#   change programRef.name to point at another Program CR.
 apiVersion: pulumi.com/v1
 kind: Stack
 metadata:
   name: demo-stack
-  namespace: gitops
+  namespace: $PULUMI_NS
 spec:
   # Stack name -- used as a key for state
   stack: dev

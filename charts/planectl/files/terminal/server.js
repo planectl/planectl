@@ -11,7 +11,6 @@ const server = http.createServer(app);
 const wss    = new WebSocketServer({ server });
 
 // ── Runtime config ────────────────────────────────────────────────────────────
-// CONTROL_PLANE_HOST is set by setup.py (defaults to localhost for local use).
 const host         = process.env.CONTROL_PLANE_HOST || 'localhost';
 const giteaPort    = process.env.GITEA_PORT          || '30080';
 const argoPort     = process.env.ARGOCD_PORT         || '8080';
@@ -75,5 +74,5 @@ wss.on('connection', (ws) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`GitOps Workshop → http://${host}:${PORT}`);
+  console.log(`planectl terminal → http://${host}:${PORT}`);
 });

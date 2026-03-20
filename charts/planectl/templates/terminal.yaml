@@ -1,0 +1,152 @@
+{{- if .Values.terminal.enabled }}
+---
+# ConfigMap — embed server.js, index.html, package.json from files/terminal/
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: planectl-terminal
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "planectl.labels" . | nindent 4 }}
+data:
+  package.json: |
+{{ .Files.Get "files/terminal/package.json" | indent 4 }}
+  server.js: |
+{{ .Files.Get "files/terminal/server.js" | indent 4 }}
+  index.html: |
+{{ .Files.Get "files/terminal/index.html" | indent 4 }}
+---
+# Deployment — initContainer installs npm deps + kubectl; main container runs the app
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: planectl-terminal
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "planectl.labels" . | nindent 4 }}
+    app.kubernetes.io/component: terminal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: planectl-terminal
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: planectl-terminal
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      initContainers:
+        - name: npm-install
+          image: node:20
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              cp /config/package.json /app/
+              cp /config/server.js    /app/
+              cp /config/index.html   /app/
+              cd /app && npm install 2>&1
+              # Download kubectl into /app so the main container's PATH finds it
+              KUBECTL_VER=$(curl -sSL https://dl.k8s.io/release/stable.txt)
+              curl -sSLo /app/kubectl \
+                "https://dl.k8s.io/release/${KUBECTL_VER}/bin/linux/amd64/kubectl"
+              chmod +x /app/kubectl
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: app
+              mountPath: /app
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+      containers:
+        - name: terminal
+          image: node:20
+          # 1. Symlink kubectl so all shell types find it (login shells reset PATH).
+          # 2. Copy kubeconfig to a writable path and fix the API server hostname:
+          #    Docker Desktop's TLS cert covers kubernetes.docker.internal, NOT host.docker.internal.
+          command:
+            - sh
+            - -c
+            - |
+              ln -sf /app/kubectl /usr/local/bin/kubectl
+              if [ -f /kube/kubeconfig ]; then
+                cp /kube/kubeconfig /tmp/kubeconfig
+                sed -i 's|https://host.docker.internal:|https://kubernetes.docker.internal:|g' /tmp/kubeconfig
+                export KUBECONFIG=/tmp/kubeconfig
+              fi
+              exec node /app/server.js
+          env:
+            - name: PORT
+              value: {{ .Values.terminal.port | quote }}
+            - name: CONTROL_PLANE_HOST
+              value: {{ .Values.host | quote }}
+            - name: GITEA_PORT
+              value: "30080"
+            - name: ARGOCD_PORT
+              value: "8080"
+            - name: DEMO_REPO
+              value: "admin/demo-repo"
+            - name: SHELL_CMD
+              value: "/bin/bash --login"
+          ports:
+            - name: http
+              containerPort: {{ .Values.terminal.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: app
+              mountPath: /app
+            - name: kubeconfig
+              mountPath: /kube
+              readOnly: true
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: {{ .Values.terminal.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: planectl-terminal
+        - name: app
+          emptyDir: {}
+        - name: kubeconfig
+          secret:
+            secretName: planectl-kubeconfig
+            optional: true
+---
+# Service — LoadBalancer so docker-desktop exposes it directly on localhost:4000
+apiVersion: v1
+kind: Service
+metadata:
+  name: planectl-terminal
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "planectl.labels" . | nindent 4 }}
+    app.kubernetes.io/component: terminal
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: planectl-terminal
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ .Values.terminal.port }}
+      targetPort: {{ .Values.terminal.port }}
+      protocol: TCP
+{{- end }}

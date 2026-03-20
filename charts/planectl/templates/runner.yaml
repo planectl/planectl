@@ -1,7 +1,7 @@
 {{- if .Values.runner.enabled }}
 # Gitea Actions runner: runs workflow jobs in Docker containers on the host.
-# The runner-token Secret is created by the planectl-init job.
-# On first install the pod will restart until the init job creates the secret --
+# The runner-token Secret is created by the planectl-wiring Job (hook-weight "10").
+# On first install the pod will restart until the wiring job creates the secret --
 # this is expected and Kubernetes will back off gracefully.
 ---
 apiVersion: v1
@@ -42,8 +42,8 @@ spec:
         fsGroup: 1000
       containers:
         - name: runner
-          image: gitea/act_runner:latest
-          imagePullPolicy: Always
+          image: {{ .Values.runner.image }}:{{ .Values.runner.imageTag }}
+          imagePullPolicy: IfNotPresent
           env:
             # Runners run Docker containers on the host; they talk to Gitea via
             # the external NodePort URL, not the in-cluster service.
