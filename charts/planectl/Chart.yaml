@@ -16,12 +16,12 @@ keywords:
   - pulumi
   - kubernetes
   - infrastructure-as-code
-home: https://github.com/drulacosmin/planectl
+home: https://github.com/planectl/planectl
 sources:
-  - https://github.com/drulacosmin/planectl
+  - https://github.com/planectl/planectl
 maintainers:
-  - name: drulacosmin
-    url: https://github.com/drulacosmin
+  - name: planectl
+    url: https://github.com/planectl
 dependencies:
   - name: gitea
     version: "12.5.0"

@@ -30,7 +30,7 @@ entries:
       platform. All connections live in readable wiring/ YAML files. Optional: KEDA
       for event-driven autoscaling. '
     digest: 3f442f787dbc902fefe300974169bfc7e8355d89332d11576b324c4539e385b2
-    home: https://github.com/drulacosmin/planectl
+    home: https://github.com/planectl/planectl
     keywords:
     - gitops
     - gitea
@@ -40,14 +40,14 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: drulacosmin
-      url: https://github.com/drulacosmin
+    - name: planectl
+      url: https://github.com/planectl
     name: planectl
     sources:
-    - https://github.com/drulacosmin/planectl
+    - https://github.com/planectl/planectl
     type: application
     urls:
-    - https://drulacosmin.github.io/planectl/planectl-0.6.0.tgz
+    - https://planectl.github.io/planectl/planectl-0.6.0.tgz
     version: 0.6.0
   - apiVersion: v2
     appVersion: 0.5.0
@@ -74,7 +74,7 @@ entries:
       bootstraps the full pipeline -- git server, CD engine, cloud controller, and
       k8s operator. '
     digest: be23a1575b05c82c85ae36903046a8690832a29a0b558090c5aba1a48f7ed331
-    home: https://github.com/drulacosmin/planectl
+    home: https://github.com/planectl/planectl
     keywords:
     - gitops
     - gitea
@@ -84,14 +84,14 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: drulacosmin
-      url: https://github.com/drulacosmin
+    - name: planectl
+      url: https://github.com/planectl
     name: planectl
     sources:
-    - https://github.com/drulacosmin/planectl
+    - https://github.com/planectl/planectl
     type: application
     urls:
-    - https://drulacosmin.github.io/planectl/planectl-0.5.0.tgz
+    - https://planectl.github.io/planectl/planectl-0.5.0.tgz
     version: 0.5.0
   - apiVersion: v2
     appVersion: 0.4.2
@@ -117,7 +117,7 @@ entries:
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
     digest: ccefd42299ce3939ea70d93395ce10cd7f769296ecdd9623f8670f1798ddd73f
-    home: https://github.com/drulacosmin/planectl
+    home: https://github.com/planectl/planectl
     keywords:
     - gitops
     - gitea
@@ -127,14 +127,14 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: drulacosmin
-      url: https://github.com/drulacosmin
+    - name: planectl
+      url: https://github.com/planectl
     name: planectl
     sources:
-    - https://github.com/drulacosmin/planectl
+    - https://github.com/planectl/planectl
     type: application
     urls:
-    - https://drulacosmin.github.io/planectl/planectl-0.4.2.tgz
+    - https://planectl.github.io/planectl/planectl-0.4.2.tgz
     version: 0.4.2
   - apiVersion: v2
     appVersion: 0.4.1
@@ -160,7 +160,7 @@ entries:
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
     digest: 802358f53d8cf123c0508e7b11266531c6d199f2caab1a298408a999009030f1
-    home: https://github.com/drulacosmin/planectl
+    home: https://github.com/planectl/planectl
     keywords:
     - gitops
     - gitea
@@ -170,14 +170,14 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: drulacosmin
-      url: https://github.com/drulacosmin
+    - name: planectl
+      url: https://github.com/planectl
     name: planectl
     sources:
-    - https://github.com/drulacosmin/planectl
+    - https://github.com/planectl/planectl
     type: application
     urls:
-    - https://drulacosmin.github.io/planectl/planectl-0.4.1.tgz
+    - https://planectl.github.io/planectl/planectl-0.4.1.tgz
     version: 0.4.1
   - apiVersion: v2
     appVersion: 0.4.0
@@ -203,7 +203,7 @@ entries:
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
     digest: 288967b6fd7fc5fcd1a05727796fd519043a413f3b87c66e7fca45c5e5e00813
-    home: https://github.com/drulacosmin/planectl
+    home: https://github.com/planectl/planectl
     keywords:
     - gitops
     - gitea
@@ -213,14 +213,14 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: drulacosmin
-      url: https://github.com/drulacosmin
+    - name: planectl
+      url: https://github.com/planectl
     name: planectl
     sources:
-    - https://github.com/drulacosmin/planectl
+    - https://github.com/planectl/planectl
     type: application
     urls:
-    - https://drulacosmin.github.io/planectl/planectl-0.4.0.tgz
+    - https://planectl.github.io/planectl/planectl-0.4.0.tgz
     version: 0.4.0
   - apiVersion: v2
     appVersion: 0.3.0
@@ -246,7 +246,7 @@ entries:
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
     digest: ea9991518d42def62eee5a87ec8853b8e03d0e03915da1ac4c69bc417896ddb2
-    home: https://github.com/drulacosmin/planectl
+    home: https://github.com/planectl/planectl
     keywords:
     - gitops
     - gitea
@@ -256,14 +256,14 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: drulacosmin
-      url: https://github.com/drulacosmin
+    - name: planectl
+      url: https://github.com/planectl
     name: planectl
     sources:
-    - https://github.com/drulacosmin/planectl
+    - https://github.com/planectl/planectl
     type: application
     urls:
-    - https://drulacosmin.github.io/planectl/planectl-0.3.0.tgz
+    - https://planectl.github.io/planectl/planectl-0.3.0.tgz
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.2.0
@@ -289,7 +289,7 @@ entries:
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
     digest: 7239331506b89fdb729790480d1ca85ed731e20dc8f417014e27575e96cf6e73
-    home: https://github.com/drulacosmin/planectl
+    home: https://github.com/planectl/planectl
     keywords:
     - gitops
     - gitea
@@ -299,14 +299,14 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: drulacosmin
-      url: https://github.com/drulacosmin
+    - name: planectl
+      url: https://github.com/planectl
     name: planectl
     sources:
-    - https://github.com/drulacosmin/planectl
+    - https://github.com/planectl/planectl
     type: application
     urls:
-    - https://drulacosmin.github.io/planectl/planectl-0.2.0.tgz
+    - https://planectl.github.io/planectl/planectl-0.2.0.tgz
     version: 0.2.0
   - apiVersion: v2
     appVersion: 1.16.0
@@ -316,6 +316,6 @@ entries:
     name: planectl
     type: application
     urls:
-    - https://drulacosmin.github.io/planectl/planectl-0.1.0.tgz
+    - https://planectl.github.io/planectl/planectl-0.1.0.tgz
     version: 0.1.0
 generated: "2026-03-20T06:26:40.109207+02:00"

@@ -55,7 +55,7 @@ kubectl describe cm planectl-wiring -n gitops
 ### one-command bootstrap
 
 ```bash
-helm repo add planectl https://drulacosmin.github.io/planectl
+helm repo add planectl https://planectl.github.io/planectl
 helm repo update planectl
 helm pull planectl/planectl --untar
 bash ./planectl/bootstrap.sh

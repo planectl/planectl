@@ -2,7 +2,7 @@
 # planectl bootstrap — interactive preflight + helm install
 #
 # Usage (after helm pull --untar):
-#   helm repo add planectl https://drulacosmin.github.io/planectl
+#   helm repo add planectl https://planectl.github.io/planectl
 #   helm repo update planectl
 #   helm pull planectl/planectl --untar
 #   bash ./planectl/bootstrap.sh
