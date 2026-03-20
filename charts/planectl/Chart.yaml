@@ -6,8 +6,8 @@ description: |
   management platform. All connections live in readable wiring/ YAML files.
   Optional: KEDA for event-driven autoscaling.
 type: application
-version: 0.6.0
-appVersion: "0.6.0"
+version: 0.7.0
+appVersion: "0.7.0"
 keywords:
   - gitops
   - gitea

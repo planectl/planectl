@@ -2,8 +2,56 @@ apiVersion: v1
 entries:
   planectl:
   - apiVersion: v2
+    appVersion: 0.7.0
+    created: "2026-03-20T10:51:01.184595+02:00"
+    dependencies:
+    - condition: gitea.enabled
+      name: gitea
+      repository: https://dl.gitea.com/charts/
+      version: 12.5.0
+    - condition: argo-cd.enabled
+      name: argo-cd
+      repository: https://argoproj.github.io/argo-helm
+      version: 7.8.28
+    - condition: crossplane.enabled
+      name: crossplane
+      repository: https://charts.crossplane.io/stable
+      version: 1.18.5
+    - condition: pulumi-kubernetes-operator.enabled
+      name: pulumi-kubernetes-operator
+      repository: oci://ghcr.io/pulumi/helm-charts
+      version: 2.5.1
+    - condition: keda.enabled
+      name: keda
+      repository: https://kedacore.github.io/charts
+      version: 2.16.0
+    description: 'One helm install. Four vanilla upstream CNCF charts (Gitea, ArgoCD,
+      Crossplane, Pulumi Operator) pre-wired and ready to use as a GitOps management
+      platform. All connections live in readable wiring/ YAML files. Optional: KEDA
+      for event-driven autoscaling. '
+    digest: eaba523bd3168c8cd94fc4bc5fa9f89578dfcbdd195f61ce05c865a99f72c97f
+    home: https://github.com/planectl/planectl
+    keywords:
+    - gitops
+    - gitea
+    - argocd
+    - crossplane
+    - pulumi
+    - kubernetes
+    - infrastructure-as-code
+    maintainers:
+    - name: planectl
+      url: https://github.com/planectl
+    name: planectl
+    sources:
+    - https://github.com/planectl/planectl
+    type: application
+    urls:
+    - https://planectl.github.io/planectl/planectl-0.7.0.tgz
+    version: 0.7.0
+  - apiVersion: v2
     appVersion: 0.6.0
-    created: "2026-03-20T06:26:40.490547+02:00"
+    created: "2026-03-20T10:51:01.128077+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -30,7 +78,7 @@ entries:
       platform. All connections live in readable wiring/ YAML files. Optional: KEDA
       for event-driven autoscaling. '
     digest: 3f442f787dbc902fefe300974169bfc7e8355d89332d11576b324c4539e385b2
-    home: https://github.com/planectl/planectl
+    home: https://github.com/drulacosmin/planectl
     keywords:
     - gitops
     - gitea
@@ -40,18 +88,18 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: planectl
-      url: https://github.com/planectl
+    - name: drulacosmin
+      url: https://github.com/drulacosmin
     name: planectl
     sources:
-    - https://github.com/planectl/planectl
+    - https://github.com/drulacosmin/planectl
     type: application
     urls:
     - https://planectl.github.io/planectl/planectl-0.6.0.tgz
     version: 0.6.0
   - apiVersion: v2
     appVersion: 0.5.0
-    created: "2026-03-20T06:26:40.438317+02:00"
+    created: "2026-03-20T10:51:01.068856+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -74,7 +122,7 @@ entries:
       bootstraps the full pipeline -- git server, CD engine, cloud controller, and
       k8s operator. '
     digest: be23a1575b05c82c85ae36903046a8690832a29a0b558090c5aba1a48f7ed331
-    home: https://github.com/planectl/planectl
+    home: https://github.com/drulacosmin/planectl
     keywords:
     - gitops
     - gitea
@@ -84,18 +132,18 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: planectl
-      url: https://github.com/planectl
+    - name: drulacosmin
+      url: https://github.com/drulacosmin
     name: planectl
     sources:
-    - https://github.com/planectl/planectl
+    - https://github.com/drulacosmin/planectl
     type: application
     urls:
     - https://planectl.github.io/planectl/planectl-0.5.0.tgz
     version: 0.5.0
   - apiVersion: v2
     appVersion: 0.4.2
-    created: "2026-03-20T06:26:40.382997+02:00"
+    created: "2026-03-20T10:51:01.017287+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -117,7 +165,7 @@ entries:
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
     digest: ccefd42299ce3939ea70d93395ce10cd7f769296ecdd9623f8670f1798ddd73f
-    home: https://github.com/planectl/planectl
+    home: https://github.com/drulacosmin/planectl
     keywords:
     - gitops
     - gitea
@@ -127,18 +175,18 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: planectl
-      url: https://github.com/planectl
+    - name: drulacosmin
+      url: https://github.com/drulacosmin
     name: planectl
     sources:
-    - https://github.com/planectl/planectl
+    - https://github.com/drulacosmin/planectl
     type: application
     urls:
     - https://planectl.github.io/planectl/planectl-0.4.2.tgz
     version: 0.4.2
   - apiVersion: v2
     appVersion: 0.4.1
-    created: "2026-03-20T06:26:40.331884+02:00"
+    created: "2026-03-20T10:51:00.962882+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -160,7 +208,7 @@ entries:
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
     digest: 802358f53d8cf123c0508e7b11266531c6d199f2caab1a298408a999009030f1
-    home: https://github.com/planectl/planectl
+    home: https://github.com/drulacosmin/planectl
     keywords:
     - gitops
     - gitea
@@ -170,18 +218,18 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: planectl
-      url: https://github.com/planectl
+    - name: drulacosmin
+      url: https://github.com/drulacosmin
     name: planectl
     sources:
-    - https://github.com/planectl/planectl
+    - https://github.com/drulacosmin/planectl
     type: application
     urls:
     - https://planectl.github.io/planectl/planectl-0.4.1.tgz
     version: 0.4.1
   - apiVersion: v2
     appVersion: 0.4.0
-    created: "2026-03-20T06:26:40.28038+02:00"
+    created: "2026-03-20T10:51:00.907695+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -203,7 +251,7 @@ entries:
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
     digest: 288967b6fd7fc5fcd1a05727796fd519043a413f3b87c66e7fca45c5e5e00813
-    home: https://github.com/planectl/planectl
+    home: https://github.com/drulacosmin/planectl
     keywords:
     - gitops
     - gitea
@@ -213,18 +261,18 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: planectl
-      url: https://github.com/planectl
+    - name: drulacosmin
+      url: https://github.com/drulacosmin
     name: planectl
     sources:
-    - https://github.com/planectl/planectl
+    - https://github.com/drulacosmin/planectl
     type: application
     urls:
     - https://planectl.github.io/planectl/planectl-0.4.0.tgz
     version: 0.4.0
   - apiVersion: v2
     appVersion: 0.3.0
-    created: "2026-03-20T06:26:40.228967+02:00"
+    created: "2026-03-20T10:51:00.845951+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -246,7 +294,7 @@ entries:
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
     digest: ea9991518d42def62eee5a87ec8853b8e03d0e03915da1ac4c69bc417896ddb2
-    home: https://github.com/planectl/planectl
+    home: https://github.com/drulacosmin/planectl
     keywords:
     - gitops
     - gitea
@@ -256,18 +304,18 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: planectl
-      url: https://github.com/planectl
+    - name: drulacosmin
+      url: https://github.com/drulacosmin
     name: planectl
     sources:
-    - https://github.com/planectl/planectl
+    - https://github.com/drulacosmin/planectl
     type: application
     urls:
     - https://planectl.github.io/planectl/planectl-0.3.0.tgz
     version: 0.3.0
   - apiVersion: v2
     appVersion: 0.2.0
-    created: "2026-03-20T06:26:40.173207+02:00"
+    created: "2026-03-20T10:51:00.75467+02:00"
     dependencies:
     - condition: gitea.enabled
       name: gitea
@@ -289,7 +337,7 @@ entries:
       Operator, all wired together and ready to use. A single helm install bootstraps
       the full pipeline -- git server, CD engine, cloud controller, and k8s operator. '
     digest: 7239331506b89fdb729790480d1ca85ed731e20dc8f417014e27575e96cf6e73
-    home: https://github.com/planectl/planectl
+    home: https://github.com/drulacosmin/planectl
     keywords:
     - gitops
     - gitea
@@ -299,18 +347,18 @@ entries:
     - kubernetes
     - infrastructure-as-code
     maintainers:
-    - name: planectl
-      url: https://github.com/planectl
+    - name: drulacosmin
+      url: https://github.com/drulacosmin
     name: planectl
     sources:
-    - https://github.com/planectl/planectl
+    - https://github.com/drulacosmin/planectl
     type: application
     urls:
     - https://planectl.github.io/planectl/planectl-0.2.0.tgz
     version: 0.2.0
   - apiVersion: v2
     appVersion: 1.16.0
-    created: "2026-03-20T06:26:40.111078+02:00"
+    created: "2026-03-20T10:51:00.530011+02:00"
     description: A Helm chart for Kubernetes
     digest: 447292346f5a42ac7eb86261405fd85217367f69c6ae10b5e5634a7dd8a06e09
     name: planectl
@@ -318,4 +366,4 @@ entries:
     urls:
     - https://planectl.github.io/planectl/planectl-0.1.0.tgz
     version: 0.1.0
-generated: "2026-03-20T06:26:40.109207+02:00"
+generated: "2026-03-20T10:51:00.524362+02:00"
